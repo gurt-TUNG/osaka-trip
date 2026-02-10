@@ -1,944 +1,453 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Calendar, MapPin, Info, CheckCircle, XCircle, Activity, 
-  Train, Plane, Utensils, Star, Baby, ExternalLink, 
-  Edit3, Save, Plus, Trash2, Home, Settings, DollarSign, List,
-  BookOpen, MessageCircle, Volume2, ShoppingBag, Hash, RefreshCw, PlayCircle,
-  Hotel, AlertTriangle
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>大阪親子7日遊</title>
+    
+    <!-- iOS Web App 設定 (讓網頁變身 APP 的關鍵) -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="大阪旅遊">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/7893/7893979.png"> <!-- 範例飛機圖示 -->
 
-// --- 語音合成 Helper ---
-const speakJapanese = (text) => {
-  if (!window.speechSynthesis) {
-    alert("您的瀏覽器不支援語音功能");
-    return;
-  }
-  // 取消正在播放的語音，避免重疊
-  window.speechSynthesis.cancel();
-
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.lang = 'ja-JP'; // 設定語言為日文
-  utterance.rate = 0.9; // 稍微放慢語速適合小朋友聽
-  utterance.pitch = 1.1; // 稍微提高音調比較有活力
-  
-  window.speechSynthesis.speak(utterance);
-};
-
-// --- 日語學習資料庫 (分類瀏覽用) ---
-const LEARNING_DATA = [
-  {
-    id: 'basic',
-    category: "基本禮貌",
-    color: "bg-green-100 text-green-700",
-    words: [
-      { ch: "你好", en: "Hello", jp: "こんにちは", romaji: "Kon-nichi-wa" },
-      { ch: "謝謝", en: "Thank you", jp: "ありがとうございます", romaji: "A-ri-ga-tou go-zai-ma-su" }, 
-      { ch: "對不起", en: "Sorry", jp: "ごめんなさい", romaji: "Go-men-na-sai" },
-      { ch: "廁所", en: "Toilet", jp: "トイレ", romaji: "To-i-re" }
-    ],
-    phrase: { ch: "請問廁所在哪裡？", jp: "トイレはどこですか？", romaji: "Toire wa doko desu ka?" } 
-  },
-  {
-    id: 'transport',
-    category: "交通探險",
-    color: "bg-blue-100 text-blue-700",
-    words: [
-      { ch: "電車", en: "Train", jp: "でんしゃ", romaji: "Den-sha" },
-      { ch: "車站", en: "Station", jp: "えき", romaji: "E-ki" },
-      { ch: "票", en: "Ticket", jp: "きっぷ", romaji: "Kip-pu" },
-      { ch: "到了", en: "Arrived", jp: "つきました", romaji: "Tsu-ki-ma-shi-ta" } 
-    ],
-    phrase: { ch: "這個去大阪嗎？", jp: "これはおおさかに行きますか？", romaji: "Kore wa Osaka ni ikimasu ka?" }
-  },
-  {
-    id: 'hotel', // 新增分類
-    category: "飯店住宿",
-    color: "bg-indigo-100 text-indigo-700",
-    words: [
-      { ch: "房間", en: "Room", jp: "へや", romaji: "He-ya" },
-      { ch: "鑰匙", en: "Key", jp: "かぎ", romaji: "Ka-gi" },
-      { ch: "毛巾", en: "Towel", jp: "タオル", romaji: "Ta-o-ru" },
-      { ch: "早餐", en: "Breakfast", jp: "ちょうしょく", romaji: "Chou-sho-ku" }
-    ],
-    phrase: { ch: "我要辦理入住", jp: "チェックインおねがいします", romaji: "Check-in onegai shimasu" }
-  },
-  {
-    id: 'shopping',
-    category: "逛街購物",
-    color: "bg-purple-100 text-purple-700",
-    words: [
-      { ch: "多少錢", en: "How much", jp: "いくらですか", romaji: "I-ku-ra de-su-ka" }, 
-      { ch: "袋子", en: "Bag", jp: "ふくろ", romaji: "Fu-ku-ro" },
-      { ch: "想要", en: "Want", jp: "ほしいです", romaji: "Ho-shi-i de-su" }, 
-      { ch: "不用了", en: "No thanks", jp: "けっこうです", romaji: "Kek-kou de-su" }
-    ],
-    phrase: { ch: "請給我袋子", jp: "ふくろをください", romaji: "Fukuro o kudasai" }
-  },
-  {
-    id: 'usj',
-    category: "環球影城",
-    color: "bg-red-100 text-red-700",
-    words: [
-      { ch: "瑪利歐", en: "Mario", jp: "マリオ", romaji: "Ma-ri-o" },
-      { ch: "爆米花", en: "Popcorn", jp: "ポップコーン", romaji: "Pop-pu-ko-on" },
-      { ch: "好玩", en: "Fun", jp: "たのしいです", romaji: "Ta-no-shi-i de-su" }, 
-      { ch: "排隊", en: "Line up", jp: "ならびます", romaji: "Na-ra-bi-ma-su" } 
-    ],
-    phrase: { ch: "我想玩這個！", jp: "これにのりたいです！", romaji: "Kore ni noritai desu!" } 
-  },
-  {
-    id: 'food',
-    category: "餐廳點餐",
-    color: "bg-orange-100 text-orange-700",
-    words: [
-      { ch: "水", en: "Water", jp: "おみず", romaji: "O-mi-zu" },
-      { ch: "好喝", en: "Yummy", jp: "おいしいです", romaji: "O-i-shi-i de-su" }, 
-      { ch: "這個", en: "This one", jp: "これ", romaji: "Ko-re" },
-      { ch: "結帳", en: "Check", jp: "おかいけい", romaji: "O-kai-kei" }
-    ],
-    phrase: { ch: "請給我這個 (指圖片)", jp: "これください", romaji: "Kore kudasai" }
-  },
-  {
-    id: 'nara',
-    category: "奈良與動物",
-    color: "bg-yellow-100 text-yellow-700",
-    words: [
-      { ch: "鹿", en: "Deer", jp: "しか", romaji: "Shi-ka" },
-      { ch: "仙貝", en: "Cracker", jp: "せんべい", romaji: "Sen-bei" },
-      { ch: "可愛", en: "Cute", jp: "かわいいです", romaji: "Ka-wa-i-i de-su" }, 
-      { ch: "痛！", en: "Ouch", jp: "いたいです", romaji: "I-ta-i de-su" } 
-    ],
-    phrase: { ch: "不行喔！(對鹿說)", jp: "だめですよ！", romaji: "Da-me de-su-yo!" } 
-  },
-  {
-    id: 'emergency', // 新增分類
-    category: "緊急求助",
-    color: "bg-gray-100 text-gray-700",
-    words: [
-      { ch: "幫忙", en: "Help", jp: "たすけて", romaji: "Ta-su-ke-te" },
-      { ch: "迷路", en: "Lost", jp: "まいご", romaji: "Ma-i-go" },
-      { ch: "警察", en: "Police", jp: "けいさつ", romaji: "Ke-i-sa-tsu" },
-      { ch: "醫院", en: "Hospital", jp: "びょういん", romaji: "Byou-in" }
-    ],
-    phrase: { ch: "我迷路了", jp: "まいごになりました", romaji: "Maigo ni narimashita" }
-  }
-];
-
-// --- 每日一句擴充至 66 句 (全方位旅遊版) ---
-const DAILY_PHRASES = [
-  // 1. 萬用禮貌金句 (8句)
-  { ch: "謝謝！", jp: "ありがとうございます！", romaji: "A-ri-ga-tou go-zai-ma-su!", desc: "超級有禮貌的說法，大家會很喜歡你。" },
-  { ch: "你好！", jp: "こんにちは！", romaji: "Kon-nichi-wa!", desc: "白天的打招呼。" },
-  { ch: "早安！", jp: "おはようございます！", romaji: "O-ha-you go-zai-ma-su!", desc: "早上跟飯店的人或店員打招呼用。" },
-  { ch: "晚安！", jp: "おやすみなさい！", romaji: "O-ya-su-mi na-sa-i!", desc: "睡覺前跟家人說。" },
-  { ch: "不好意思...", jp: "すみません...", romaji: "Su-mi-ma-sen", desc: "要叫店員、借過、或是稍微撞到人時都可以用。" },
-  { ch: "拜託你了", jp: "おねがいします", romaji: "O-ne-ga-i-shi-ma-su", desc: "點餐或請求幫助時句尾加上這句。" },
-  { ch: "沒關係", jp: "だいじょうぶです", romaji: "Dai-jou-bu de-su", desc: "別人跟你道歉，或是問你好不好的時候。" },
-  { ch: "再見！", jp: "さようなら！", romaji: "Sa-you-na-ra!", desc: "跟新認識的朋友說掰掰。" },
-
-  // 2. 機場與交通 (10句)
-  { ch: "這個去大阪嗎？", jp: "これはおおさかに行きますか？", romaji: "Kore wa Osaka ni ikimasu ka?", desc: "確認電車方向。" },
-  { ch: "這個去三宮嗎？", jp: "これはさんのみやに行きますか？", romaji: "Kore wa Sannomiya ni ikimasu ka?", desc: "神戶機場搭車時用。" },
-  { ch: "車站哪裡？", jp: "えきはどこですか？", romaji: "E-ki wa do-ko de-su-ka?", desc: "迷路找車站時。" },
-  { ch: "請給我地圖", jp: "ちずをください", romaji: "Chi-zu o ku-da-sa-i", desc: "在遊客中心要地圖。" },
-  { ch: "這班是快速電車嗎？", jp: "これはかいそくですか？", romaji: "Kore wa kaisoku desu ka?", desc: "怕搭到每站停的慢車時問。" },
-  { ch: "售票處在哪裡？", jp: "きっぷうりばはどこですか？", romaji: "Kippu uriba wa doko desu ka?", desc: "要買票的時候。" },
-  { ch: "我要儲值(IC卡)", jp: "チャージしたいです", romaji: "Cha-ji shi-ta-i de-su", desc: "西瓜卡/ICOCA沒錢的時候。" },
-  { ch: "請載我去這裡", jp: "ここに行ってください", romaji: "Koko ni itte kudasai", desc: "給計程車司機看地址時說。" },
-  { ch: "大概多久？", jp: "どのくらいかかりますか？", romaji: "Dono kurai kakarimasu ka?", desc: "問車程時間。" },
-  { ch: "電梯在哪裡？", jp: "エレベーターはどこですか？", romaji: "Erebila wa doko desu ka?", desc: "推行李或推車找電梯必備。" },
-
-  // 3. 飯店住宿 (8句)
-  { ch: "我要辦理入住", jp: "チェックインおねがいします", romaji: "Check-in onegai shimasu", desc: "到飯店櫃檯第一句話。" },
-  { ch: "我要退房", jp: "チェックアウトおねがいします", romaji: "Check-out onegai shimasu", desc: "離開飯店時說。" },
-  { ch: "可以寄放行李嗎？", jp: "にもつをあずかってもらえますか？", romaji: "Nimotsu o azukatte moraemasu ka?", desc: "還沒到入住時間想先放行李。" },
-  { ch: "早餐幾點開始？", jp: "ちょうしょくはなんじですか？", romaji: "Choushoku wa nanji desu ka?", desc: "確認早餐時間。" },
-  { ch: "請給我毛巾", jp: "タオルをください", romaji: "Taoru o kudasai", desc: "毛巾不夠時。" },
-  { ch: "有Wi-Fi嗎？", jp: "Wi-Fi ありますか？", romaji: "Wi-Fi a-ri-ma-su-ka?", desc: "問密碼。" },
-  { ch: "請給我房卡", jp: "カードキーをください", romaji: "Card key o kudasai", desc: "房卡遺失或需要多一張時。" },
-  { ch: "附近有便利商店嗎？", jp: "ちかくにコンビニはありますか？", romaji: "Chikaku ni konbini wa arimasu ka?", desc: "晚上想買零食。" },
-
-  // 4. 享受美食 (10句)
-  { ch: "請給我這個！", jp: "これください！", romaji: "Kore kudasai!", desc: "萬用點餐句。" },
-  { ch: "好好吃！", jp: "おいしいです！", romaji: "O-i-shi-i de-su!", desc: "讚美廚師。" },
-  { ch: "我要開動了！", jp: "いただきます！", romaji: "I-ta-da-ki-ma-su", desc: "開動前必說。" },
-  { ch: "我吃飽了！", jp: "ごちそうさまでした！", romaji: "Go-chi-sou-sa-ma de-shi-ta", desc: "吃完離席時說。" },
-  { ch: "請給我水", jp: "おみずください", romaji: "O-mi-zu ku-da-sa-i", desc: "口渴時。" },
-  { ch: "有兒童椅嗎？", jp: "こどもようのいすはありますか？", romaji: "Kodomo you no isu wa arimasu ka?", desc: "帶小朋友用餐必問。" },
-  { ch: "請給我小碗", jp: "とりざらをください", romaji: "Torizara o kudasai", desc: "分食給小朋友用的小盤子或碗。" },
-  { ch: "不要加山葵(哇沙米)", jp: "わさびぬきでおねがいします", romaji: "Wasabi nuki de onegai shimasu", desc: "小朋友吃壽司必備。" },
-  { ch: "不要冰塊", jp: "こおりなしで", romaji: "Koori nashi de", desc: "感冒或不想喝太冰。" },
-  { ch: "我要結帳", jp: "おかいけいおねがいします", romaji: "O-kai-kei onegai shimasu", desc: "吃飽付錢囉。" },
-
-  // 5. 快樂購物 (10句)
-  { ch: "多少錢？", jp: "いくらですか？", romaji: "I-ku-ra de-su-ka?", desc: "買東西第一句。" },
-  { ch: "我有這張卡(指)", jp: "このカードはつかえますか？", romaji: "Kono kado wa tsukaemasu ka?", desc: "確認能不能刷卡或用優惠券。" },
-  { ch: "可以免稅嗎？", jp: "めんぜいできますか？", romaji: "Menzei dekimasu ka?", desc: "大採購時記得問。" },
-  { ch: "有新的嗎？", jp: "あたらしいのはありますか？", romaji: "Atarashii no wa arimasu ka?", desc: "想拿庫存新品。" },
-  { ch: "可以試穿嗎？", jp: "しちゃくできますか？", romaji: "Shichaku dekimasu ka?", desc: "買衣服鞋子用。" },
-  { ch: "請給我袋子", jp: "ふくろをください", romaji: "Fukuro o kudasai", desc: "雖然可能要錢，但需要時就說。" },
-  { ch: "這是什麼？", jp: "これはなんですか？", romaji: "Ko-re wa nan de-su-ka?", desc: "好奇寶寶。" },
-  { ch: "太可愛了！", jp: "かわいいです！", romaji: "Ka-wa-i-i de-su!", desc: "看到喜歡的東西。" },
-  { ch: "好便宜！", jp: "やすいですね！", romaji: "Yasui desu ne!", desc: "發現特價品。" },
-  { ch: "請給我收據", jp: "レシートをください", romaji: "Reshito o kudasai", desc: "記帳需要。" },
-
-  // 6. 景點與遊玩 (USJ/奈良) (10句)
-  { ch: "廁所在哪裡？", jp: "トイレはどこですか？", romaji: "To-i-re wa do-ko de-su-ka?", desc: "最重要的句子。" },
-  { ch: "我想玩這個！", jp: "これにのりたいです！", romaji: "Kore ni noritai desu!", desc: "指著遊樂設施說。" },
-  { ch: "要排多久？", jp: "どのくらいまちますか？", romaji: "Dono kurai machimasu ka?", desc: "問工作人員等待時間。" },
-  { ch: "可以拍照嗎？", jp: "しゃしん OKですか？", romaji: "Sha-shin OK de-su-ka?", desc: "想拍人偶或店內。" },
-  { ch: "可以幫我們拍照嗎？", jp: "しゃしんをとってもらえますか？", romaji: "Shashin o totte moraemasu ka?", desc: "請路人幫全家合照。" },
-  { ch: "兩位(人數)", jp: "ふたりです", romaji: "Futari desu", desc: "進餐廳或玩設施報人數。" },
-  { ch: "可以再入場嗎？", jp: "さいにゅうじょうできますか？", romaji: "Sainyuujou dekimasu ka?", desc: "想暫時出園區時問。" },
-  { ch: "好玩！", jp: "たのしいです！", romaji: "Ta-no-shi-i de-su!", desc: "玩得開心大聲說。" },
-  { ch: "好厲害！", jp: "すごいですね！", romaji: "Su-go-i de-su-ne!", desc: "看遊行或表演時。" },
-  { ch: "太好了/耶！", jp: "やったー！", romaji: "Yat-ta!", desc: "抽到扭蛋或贏得遊戲。" },
-
-  // 7. 緊急與求助 (10句)
-  { ch: "我不舒服...", jp: "きぶんがわるいです...", romaji: "Ki-bun ga wa-ru-i de-su", desc: "想吐或頭暈時。" },
-  { ch: "好痛！", jp: "いたいです！", romaji: "I-ta-i de-su!", desc: "受傷時。" },
-  { ch: "請幫幫我！", jp: "たすけてください！", romaji: "Ta-su-ke-te ku-da-sa-i!", desc: "遇到困難時。" },
-  { ch: "我迷路了", jp: "まいごになりました", romaji: "Maigo ni narimashita", desc: "找不到路時。" },
-  { ch: "小孩走丟了", jp: "こどもがまいごです", romaji: "Kodomo ga maigo desu", desc: "最緊急的情況，找工作人員。" },
-  { ch: "我聽不懂", jp: "わかりません", romaji: "Wa-ka-ri-ma-sen", desc: "對方說太快時。" },
-  { ch: "請說慢一點", jp: "ゆっくりおねがいします", romaji: "Yukkuri onegai shimasu", desc: "請對方放慢速度。" },
-  { ch: "英文 OK？", jp: "えいご OKですか？", romaji: "E-i-go OK de-su-ka?", desc: "想改用英文溝通。" },
-  { ch: "我有過敏", jp: "アレルギーがあります", romaji: "Arerugi ga arimasu", desc: "吃飯時告知店員。" },
-  { ch: "請等一下", jp: "ちょっとまってください", romaji: "Chot-to mat-te ku-da-sa-i", desc: "找東西或跟家人討論時。" }
-];
-
-// --- 初始資料 (模擬後端 API) ---
-
-const INITIAL_ITINERARY_DATA = [
-  {
-    day: 1,
-    date: "2026/04/18",
-    weekday: "週六",
-    title: "抵達神戶與移動至大阪",
-    intensity: "medium", 
-    intensityScore: 5,
-    location: "Kobe Airport", 
-    displayLocation: "神戶機場 -> 大阪市區",
-    desc: "10:30 抵達神戶機場 (UKB)。搭乘 Port Liner 至三宮站，轉車前往大阪(難波/梅田)。Check-in 後採買零食。",
-    userNotes: "", 
-    meals: {
-      breakfast: "機上",
-      lunch: "神戶三宮/大阪市區",
-      dinner: "鳥貴族 (全熟食居酒屋)",
-      note: "晚餐選擇全熟串燒，無生食風險。"
-    },
-    spots: [
-      { name: "神戶機場 (UKB)", type: "transport" },
-      { name: "移動至大阪", type: "transport" },
-      { name: "便利商店 (採買零食)", type: "shopping" }
-    ]
-  },
-  {
-    day: 2,
-    date: "2026/04/19",
-    weekday: "週日",
-    title: "奈良：小鹿與大佛",
-    intensity: "medium",
-    intensityScore: 7,
-    location: "Nara Park",
-    displayLocation: "奈良公園",
-    desc: "戶外走動為主。避開兇猛大鹿，前往東大寺與小鹿互動。",
-    userNotes: "",
-    meals: {
-      breakfast: "便利商店/飯店",
-      lunch: "志津香釜飯 (熟食/軟爛)",
-      dinner: "市區簡餐 (烏龍麵/丼飯)",
-      note: "釜飯排隊人多建議提早。"
-    },
-    spots: [
-      { name: "近鐵奈良站", type: "transport" },
-      { name: "奈良公園", type: "outdoor" },
-      { name: "東大寺 (大佛鼻孔鑽洞)", type: "temple" }
-    ]
-  },
-  {
-    day: 3,
-    date: "2026/04/20",
-    weekday: "週一",
-    title: "環球影城 USJ (全日)",
-    intensity: "high",
-    intensityScore: 10,
-    location: "Universal Studios Japan",
-    displayLocation: "USJ 環球影城",
-    desc: "超級任天堂世界主場。全日戰鬥行程，早出晚歸。",
-    userNotes: "",
-    meals: {
-      breakfast: "便利商店 (飯糰)",
-      lunch: "園區輕食/餐廳 (Snoopy Cafe)",
-      dinner: "便利商店 (炸雞/便當)",
-      note: "全日專注遊玩，餐食求快與飽。"
-    },
-    spots: [
-      { name: "超級任天堂世界", type: "play" },
-      { name: "小小兵樂園", type: "play" },
-      { name: "環球奇境 (小孩休息區)", type: "relax" }
-    ]
-  },
-  {
-    day: 4,
-    date: "2026/04/21",
-    weekday: "週二",
-    title: "京都鐵道博物館 (緩衝)",
-    intensity: "low",
-    intensityScore: 3,
-    location: "Kyoto Railway Museum",
-    displayLocation: "京都梅小路",
-    desc: "USJ 隔日的體力恢復日。室內為主，多座位。",
-    userNotes: "",
-    meals: {
-      breakfast: "飯店/咖啡廳",
-      lunch: "館內火車便當",
-      dinner: "京都車站拉麵小路",
-      note: "拉麵選擇不辣口味 (豚骨/醬油)。"
-    },
-    spots: [
-      { name: "京都鐵道博物館", type: "museum" },
-      { name: "京都車站 (流水電梯)", type: "sight" }
-    ]
-  },
-  {
-    day: 5,
-    date: "2026/04/22",
-    weekday: "週三",
-    title: "海遊館 + 樂高樂園",
-    intensity: "medium-high",
-    intensityScore: 8,
-    location: "Osaka Aquarium Kaiyukan",
-    displayLocation: "大阪港海遊館",
-    desc: "港灣區全日遊。海遊館下坡好走，樂高樂園小孩最愛。",
-    userNotes: "",
-    meals: {
-      breakfast: "便利商店",
-      lunch: "天保山美食街 (大阪燒)",
-      dinner: "便利商店 (回飯店吃)",
-      note: "玩到閉館，晚餐隨意解決。"
-    },
-    spots: [
-      { name: "海遊館 (鯨鯊)", type: "aquarium" },
-      { name: "大阪樂高樂園 (室內)", type: "play" },
-      { name: "天保山摩天輪", type: "view" }
-    ]
-  },
-  {
-    day: 6,
-    date: "2026/04/23",
-    weekday: "週四",
-    title: "京都經典散策",
-    intensity: "medium",
-    intensityScore: 6,
-    location: "Kiyomizu-dera",
-    displayLocation: "京都清水寺/伏見",
-    desc: "感受傳統日本。伏見稻荷只走前段，清水寺慢慢逛。",
-    userNotes: "",
-    meals: {
-      breakfast: "便利商店/飯店",
-      lunch: "湯豆腐/親子丼",
-      dinner: "迴轉壽司 (熟食系)",
-      note: "壽司店主攻炙燒、天婦羅、烏龍麵。"
-    },
-    spots: [
-      { name: "伏見稻荷大社", type: "temple" },
-      { name: "清水寺", type: "temple" },
-      { name: "二年坂/三年坂", type: "walk" }
-    ]
-  },
-  {
-    day: 7,
-    date: "2026/04/24",
-    weekday: "週五",
-    title: "Kids Plaza & 返台",
-    intensity: "medium",
-    intensityScore: 6,
-    location: "Rinku Premium Outlets",
-    displayLocation: "臨空城 -> 關西機場",
-    desc: "上午 Kids Plaza 放電，下午臨空城 Outlet 最後採購。20:55 班機返台。",
-    userNotes: "",
-    meals: {
-      breakfast: "飯店退房",
-      lunch: "扇町/梅田簡餐",
-      dinner: "機場/Outlet 美食",
-      note: "預計 18:30 前抵達機場報到。"
-    },
-    spots: [
-      { name: "Kids Plaza Osaka", type: "play" },
-      { name: "臨空城 Outlet", type: "shopping" },
-      { name: "關西國際機場 (KIX)", type: "transport" }
-    ]
-  }
-];
-
-const USJ_RIDES = [
-  { id: 1, name: "瑪利歐賽車：庫巴的挑戰書", minHeight: 107, area: "任天堂", type: "刺激", switch: true },
-  { id: 2, name: "耀西冒險", minHeight: 86, area: "任天堂", type: "溫和", switch: false },
-  { id: 3, name: "哈利波特禁忌之旅", minHeight: 122, area: "哈利波特", type: "刺激", switch: true },
-  { id: 4, name: "鷹馬的飛行", minHeight: 92, area: "哈利波特", type: "溫和", switch: true },
-  { id: 5, name: "小小兵瘋狂乘車遊", minHeight: 102, area: "小小兵", type: "刺激", switch: true },
-  { id: 6, name: "小小兵冰凍雷射光", minHeight: 92, area: "小小兵", type: "溫和", switch: false },
-  { id: 7, name: "大白鯊", minHeight: 0, area: "親善村", type: "驚悚", switch: true },
-  { id: 8, name: "飛天翼龍", minHeight: 132, area: "侏羅紀", type: "超刺激", switch: true },
-];
-
-// --- 組件 ---
-
-const GoogleMapEmbed = ({ location }) => {
-  const encodedLoc = encodeURIComponent(location);
-  const mapSrc = `https://maps.google.com/maps?q=${encodedLoc}&t=&z=14&ie=UTF8&iwloc=&output=embed`;
-
-  return (
-    <div className="mt-4 rounded-lg overflow-hidden border border-gray-200 shadow-inner bg-gray-100 relative">
-      <div className="absolute top-2 right-2 z-10">
-        <a 
-          href={`https://www.google.com/maps/search/?api=1&query=${encodedLoc}`} 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="bg-white/90 hover:bg-white text-blue-600 text-xs font-bold px-3 py-1.5 rounded-full shadow-sm flex items-center gap-1 border border-gray-200 transition-colors"
-        >
-          <ExternalLink size={12} /> 開啟 Google Map
-        </a>
-      </div>
-      <iframe
-        title={`Map of ${location}`}
-        width="100%"
-        height="200"
-        frameBorder="0"
-        scrolling="no"
-        marginHeight="0"
-        marginWidth="0"
-        src={mapSrc}
-        className="w-full h-48 bg-gray-200"
-      ></iframe>
-    </div>
-  );
-};
-
-const IntensityBadge = ({ score }) => {
-  let color = "bg-green-100 text-green-800";
-  let label = "輕鬆";
-  if (score >= 8) {
-    color = "bg-red-100 text-red-800";
-    label = "高強度";
-  } else if (score >= 5) {
-    color = "bg-yellow-100 text-yellow-800";
-    label = "中等";
-  }
-
-  return (
-    <span className={`px-2 py-1 rounded-full text-xs font-bold ${color} flex items-center gap-1`}>
-      <Activity size={12} /> {label} ({score})
-    </span>
-  );
-};
-
-const RideChecker = () => {
-  const [height, setHeight] = useState(100);
-
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
-          <Baby size={24} />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-gray-800">USJ 設施身高快篩</h3>
-          <p className="text-sm text-gray-500">輸入小朋友身高，即時判斷可玩設施</p>
-        </div>
-      </div>
-
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          小朋友身高: <span className="text-blue-600 font-bold text-xl">{height} cm</span>
-        </label>
-        <input
-          type="range"
-          min="80"
-          max="140"
-          value={height}
-          onChange={(e) => setHeight(parseInt(e.target.value))}
-          className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
-        />
-        <div className="flex justify-between text-xs text-gray-400 mt-1">
-          <span>80cm</span>
-          <span>100cm (二寶)</span>
-          <span>115cm (大寶)</span>
-          <span>140cm</span>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {USJ_RIDES.map((ride) => {
-          const isAllowed = height >= ride.minHeight;
-          return (
-            <div key={ride.id} className={`p-3 rounded-lg border flex items-center justify-between ${isAllowed ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-              <div>
-                <div className="font-bold text-gray-800 text-sm">{ride.name}</div>
-                <div className="text-xs text-gray-500 mt-1">{ride.area} | {ride.type}</div>
-                {!isAllowed && ride.switch && (
-                   <span className="text-[10px] text-orange-600 font-bold mt-1 block">💡 建議使用 Child Switch (輪流乘坐)</span>
-                )}
-              </div>
-              <div className="flex-shrink-0 ml-2">
-                {isAllowed ? (
-                  <CheckCircle className="text-green-600" size={20} />
-                ) : (
-                  <div className="flex flex-col items-center">
-                    <XCircle className="text-red-500" size={20} />
-                    <span className="text-[10px] text-red-500 font-bold mt-1">{ride.minHeight}cm+</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-};
-
-const ExpenseTracker = () => {
-  const [expenses, setExpenses] = useState([]);
-  const [desc, setDesc] = useState("");
-  const [amount, setAmount] = useState("");
-
-  const handleAdd = () => {
-    if (!desc || !amount) return;
-    const newExpense = {
-      id: Date.now(),
-      desc,
-      amount: parseInt(amount),
-      time: new Date().toLocaleTimeString('zh-TW', {hour: '2-digit', minute:'2-digit'})
-    };
-    setExpenses([newExpense, ...expenses]);
-    setDesc("");
-    setAmount("");
-  };
-
-  const total = expenses.reduce((sum, item) => sum + item.amount, 0);
-
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="p-2 bg-yellow-100 rounded-lg text-yellow-600">
-          <DollarSign size={24} />
-        </div>
-        <div>
-          <h3 className="text-lg font-bold text-gray-800">簡易記帳</h3>
-          <p className="text-sm text-gray-500">記錄旅行中的花費 (日幣)</p>
-        </div>
-      </div>
-
-      <div className="bg-gray-50 p-4 rounded-lg mb-4 flex gap-2">
-         <input 
-           type="text" 
-           placeholder="項目 (如: 買飲料)" 
-           className="flex-1 p-2 border border-gray-300 rounded-md text-sm"
-           value={desc}
-           onChange={(e) => setDesc(e.target.value)}
-         />
-         <input 
-           type="number" 
-           placeholder="¥ 金額" 
-           className="w-24 p-2 border border-gray-300 rounded-md text-sm"
-           value={amount}
-           onChange={(e) => setAmount(e.target.value)}
-         />
-         <button 
-           onClick={handleAdd}
-           className="bg-blue-600 text-white p-2 rounded-md hover:bg-blue-700"
-         >
-           <Plus size={20} />
-         </button>
-      </div>
-
-      <div className="mb-4">
-        <div className="text-right text-sm text-gray-600">總支出</div>
-        <div className="text-right text-2xl font-bold text-gray-800">¥ {total.toLocaleString()}</div>
-      </div>
-
-      <div className="space-y-2 max-h-60 overflow-y-auto">
-        {expenses.length === 0 && <p className="text-center text-gray-400 text-xs py-4">尚未有記錄</p>}
-        {expenses.map((item) => (
-          <div key={item.id} className="flex justify-between items-center p-2 border-b border-gray-100 last:border-0">
-            <div className="flex flex-col">
-              <span className="text-sm font-medium text-gray-700">{item.desc}</span>
-              <span className="text-xs text-gray-400">{item.time}</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="font-bold text-gray-800">¥ {item.amount.toLocaleString()}</span>
-              <button 
-                onClick={() => setExpenses(expenses.filter(e => e.id !== item.id))}
-                className="text-red-300 hover:text-red-500"
-              >
-                <Trash2 size={14} />
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// --- 新增：日語學習卡片組件 (包含每日一句) ---
-const LanguageLearning = () => {
-  const [dailyPhrase, setDailyPhrase] = useState(DAILY_PHRASES[0]);
-
-  const handleRandomPhrase = () => {
-    const randomIndex = Math.floor(Math.random() * DAILY_PHRASES.length);
-    setDailyPhrase(DAILY_PHRASES[randomIndex]);
-  };
-
-  useEffect(() => {
-    handleRandomPhrase();
-  }, []);
-
-  return (
-    <div className="space-y-6">
-      
-      {/* 每日一句卡片 */}
-      <div className="bg-gradient-to-r from-pink-500 to-rose-500 p-4 rounded-xl shadow-md text-white relative overflow-hidden">
-        <div className="flex justify-between items-start mb-2 relative z-10">
-          <div className="flex items-center gap-2">
-            <div className="p-1 bg-white/20 rounded-lg">
-              <Star size={20} className="text-yellow-300 fill-current" />
-            </div>
-            <h3 className="text-lg font-bold">每日一句挑戰 (共66句)</h3>
-          </div>
-          <button onClick={handleRandomPhrase} className="p-1 bg-white/10 rounded-full hover:bg-white/20 transition-colors">
-            <RefreshCw size={16} />
-          </button>
-        </div>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* 針對 iOS 的優化 */
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f9fafb; 
+            padding-bottom: 90px; /* 增加底部空間給 iPhone 的 Home Bar */
+            -webkit-tap-highlight-color: transparent; /* 移除點擊高亮 */
+        }
+        .tab-active { color: #2563eb; }
+        .tab-inactive { color: #9ca3af; }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
         
-        <div className="mt-4 text-center relative z-10">
-          <div 
-             className="text-3xl font-bold mb-2 cursor-pointer hover:scale-105 transition-transform flex items-center justify-center gap-2"
-             onClick={() => speakJapanese(dailyPhrase.jp)}
-          >
-            {dailyPhrase.jp} <Volume2 size={24} className="opacity-80" />
-          </div>
-          <div className="text-sm font-medium text-pink-100 mb-2">{dailyPhrase.romaji}</div>
-          <div className="text-xl font-bold mb-1">{dailyPhrase.ch}</div>
-          <div className="text-xs text-pink-100 opacity-90">{dailyPhrase.desc}</div>
-        </div>
-      </div>
-
-      <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-        <div className="flex items-center gap-2 mb-2">
-          <div className="p-2 bg-pink-100 rounded-lg text-pink-600">
-            <BookOpen size={24} />
-          </div>
-          <h3 className="text-lg font-bold text-gray-800">分類學習 (點擊發音)</h3>
-        </div>
-        <p className="text-sm text-gray-500 mb-4">點擊卡片練習說說看！</p>
+        /* 隱藏捲軸但保持滾動 */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        <div className="space-y-6">
-          {LEARNING_DATA.map((category) => (
-            <div key={category.id} className="border-t border-gray-100 pt-4 first:border-0 first:pt-0">
-              <h4 className={`text-md font-bold mb-3 px-2 py-1 rounded inline-block ${category.color}`}>
-                {category.category}
-              </h4>
-              
-              {/* 單字卡片 */}
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                {category.words.map((word, idx) => (
-                  <div 
-                    key={idx} 
-                    className="bg-gray-50 p-3 rounded-lg border border-gray-100 hover:shadow-md transition-shadow text-center relative group cursor-pointer active:scale-95 transition-transform"
-                    onClick={() => speakJapanese(word.jp)}
-                  >
-                     {/* Hover 提示音效 (視覺模擬) */}
-                    <div className="absolute top-2 right-2 text-gray-300 group-hover:text-blue-500">
-                      <Volume2 size={14} />
-                    </div>
-                    <div className="text-xl font-bold text-gray-800 mb-1">{word.jp}</div>
-                    <div className="text-xs text-blue-600 font-medium mb-1">{word.romaji}</div>
-                    <div className="text-sm text-gray-500">{word.ch} <span className="text-xs text-gray-400">({word.en})</span></div>
-                  </div>
-                ))}
-              </div>
+        /* 針對 iPhone 安全區域的調整 */
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+</head>
+<body>
 
-              {/* 實用例句 */}
-              <div 
-                className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-start gap-3 cursor-pointer hover:bg-blue-100 transition-colors"
-                onClick={() => speakJapanese(category.phrase.jp)}
-              >
-                <div className="p-2 bg-blue-100 rounded-full text-blue-600 mt-1">
-                  <PlayCircle size={20} />
-                </div>
-                <div>
-                  <div className="text-xs font-bold text-blue-500 mb-1">挑戰說一句：</div>
-                  <div className="text-lg font-bold text-gray-800">{category.phrase.jp}</div>
-                  <div className="text-sm text-blue-700">{category.phrase.romaji}</div>
-                  <div className="text-sm text-gray-500 mt-1">{category.phrase.ch}</div>
-                </div>
-              </div>
+    <!-- 頂部標題 -->
+    <header class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-50 pt-safe">
+        <div class="max-w-md mx-auto flex justify-between items-center pt-2"> <!-- 增加 pt-2 避開狀態列 -->
+            <div>
+                <h1 class="text-xl font-bold">大阪親子 7 日遊</h1>
+                <p class="text-xs text-blue-200">2026/04/18 - 04/24 • 2大2小</p>
             </div>
-          ))}
+            <div class="bg-blue-700 p-2 rounded-full">
+                <i data-lucide="plane" class="w-5 h-5"></i>
+            </div>
         </div>
-      </div>
-    </div>
-  );
-};
+    </header>
 
-const DayCard = ({ dayData, isExpanded, onToggle, onSaveNote }) => {
-  const [noteText, setNoteText] = useState(dayData.userNotes || "");
-  const [isEditingNote, setIsEditingNote] = useState(false);
+    <!-- 主要內容區 -->
+    <main id="app-content" class="max-w-md mx-auto p-4 min-h-screen">
+        <!-- 內容由 JavaScript 動態渲染 -->
+    </main>
 
-  const handleSave = () => {
-    onSaveNote(dayData.day, noteText);
-    setIsEditingNote(false);
-  };
-
-  return (
-    <div className={`bg-white rounded-xl shadow-sm border border-gray-200 transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-500' : 'hover:shadow-md'}`}>
-      {/* Header */}
-      <div 
-        className="p-4 flex items-center justify-between cursor-pointer"
-        onClick={onToggle}
-      >
-        <div className="flex items-center gap-4">
-          <div className="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg text-gray-600 font-bold">
-            <span className="text-xs uppercase">Day</span>
-            <span className="text-xl">{dayData.day}</span>
-          </div>
-          <div>
-            <div className="text-xs text-gray-500 flex gap-2">
-              <span>{dayData.date}</span>
-              <span>{dayData.weekday}</span>
-            </div>
-            <h3 className="text-lg font-bold text-gray-800">{dayData.title}</h3>
-          </div>
+    <!-- 底部導航列 -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 pb-safe">
+        <div class="max-w-md mx-auto flex justify-around items-center h-16 pb-1"> <!-- 增加 pb-1 微調位置 -->
+            <button onclick="switchTab('itinerary')" class="nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400" id="btn-itinerary">
+                <i data-lucide="home" class="w-6 h-6"></i>
+                <span class="text-[10px] font-medium">行程</span>
+            </button>
+            <button onclick="switchTab('tools')" class="nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400" id="btn-tools">
+                <i data-lucide="settings" class="w-6 h-6"></i>
+                <span class="text-[10px] font-medium">工具</span>
+            </button>
+            <button onclick="switchTab('learning')" class="nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400" id="btn-learning">
+                <i data-lucide="book-open" class="w-6 h-6"></i>
+                <span class="text-[10px] font-medium">日語</span>
+            </button>
+            <button onclick="switchTab('packing')" class="nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400" id="btn-packing">
+                <i data-lucide="list" class="w-6 h-6"></i>
+                <span class="text-[10px] font-medium">清單</span>
+            </button>
         </div>
-        <IntensityBadge score={dayData.intensityScore} />
-      </div>
+    </nav>
 
-      {/* Expanded Details */}
-      {isExpanded && (
-        <div className="p-4 pt-0 border-t border-gray-100 mt-2">
-          
-          {/* User Note Section */}
-          <div className="mb-4 bg-yellow-50 p-3 rounded-lg border border-yellow-100">
-            <div className="flex justify-between items-center mb-2">
-              <h4 className="text-xs font-bold text-yellow-700 uppercase flex items-center gap-1">
-                <Edit3 size={12} /> 我的筆記
-              </h4>
-              {!isEditingNote ? (
-                <button onClick={() => setIsEditingNote(true)} className="text-xs text-blue-600 hover:underline">編輯</button>
-              ) : (
-                <button onClick={handleSave} className="text-xs text-green-600 font-bold flex items-center gap-1">
-                  <Save size={12} /> 儲存
-                </button>
-              )}
-            </div>
+    <script>
+        // --- 資料庫 ---
+        const ITINERARY_DATA = [
+            {
+                day: 1, date: "4/18 (六)", title: "抵達神戶與移動至大阪", intensity: 5, location: "Kobe Airport", displayLoc: "神戶機場 -> 大阪市區",
+                desc: "10:30 抵達神戶機場 (UKB)。搭乘 Port Liner 至三宮站，轉車前往大阪(難波/梅田)。Check-in 後採買零食。",
+                meals: { b: "機上", l: "神戶三宮/大阪市區", d: "鳥貴族 (全熟食)" },
+                spots: ["神戶機場 (UKB)", "移動至大阪", "便利商店"]
+            },
+            {
+                day: 2, date: "4/19 (日)", title: "奈良：小鹿與大佛", intensity: 7, location: "Nara Park", displayLoc: "奈良公園",
+                desc: "戶外走動為主。避開兇猛大鹿，前往東大寺與小鹿互動。",
+                meals: { b: "便利商店", l: "志津香釜飯", d: "市區簡餐" },
+                spots: ["近鐵奈良站", "奈良公園", "東大寺"]
+            },
+            {
+                day: 3, date: "4/20 (一)", title: "🔥 環球影城 USJ", intensity: 10, location: "Universal Studios Japan", displayLoc: "USJ 環球影城",
+                desc: "全日戰鬥行程。超級任天堂世界主場，早出晚歸。",
+                meals: { b: "飯糰", l: "園區輕食", d: "便利商店炸雞" },
+                spots: ["任天堂世界", "小小兵樂園", "環球奇境"]
+            },
+            {
+                day: 4, date: "4/21 (二)", title: "京都鐵道博物館 (緩衝)", intensity: 3, location: "Kyoto Railway Museum", displayLoc: "京都梅小路",
+                desc: "體力恢復日。室內為主，多座位。",
+                meals: { b: "飯店", l: "火車便當", d: "拉麵小路 (不辣)" },
+                spots: ["京都鐵道博物館", "京都車站"]
+            },
+            {
+                day: 5, date: "4/22 (三)", title: "海遊館 + 樂高樂園", intensity: 8, location: "Osaka Aquarium Kaiyukan", displayLoc: "大阪港海遊館",
+                desc: "港灣區全日遊。樂高樂園小孩最愛。",
+                meals: { b: "便利商店", l: "天保山大阪燒", d: "便利商店" },
+                spots: ["海遊館", "大阪樂高樂園", "摩天輪"]
+            },
+            {
+                day: 6, date: "4/23 (四)", title: "京都經典散策", intensity: 6, location: "Kiyomizu-dera", displayLoc: "京都清水寺",
+                desc: "感受傳統日本。伏見稻荷只走前段，清水寺慢慢逛。",
+                meals: { b: "飯店", l: "湯豆腐/親子丼", d: "迴轉壽司 (熟食)" },
+                spots: ["伏見稻荷", "清水寺", "二年坂"]
+            },
+            {
+                day: 7, date: "4/24 (五)", title: "Kids Plaza & 返台", intensity: 6, location: "Rinku Premium Outlets", displayLoc: "臨空城 -> 機場",
+                desc: "上午 Kids Plaza 放電，下午臨空城 Outlet 最後採購。20:55 班機返台。",
+                meals: { b: "退房", l: "扇町簡餐", d: "機場/Outlet" },
+                spots: ["Kids Plaza", "臨空城 Outlet", "關西機場"]
+            }
+        ];
+
+        const DAILY_PHRASES = [
+            { ch: "請給我這個！", jp: "これください！", romaji: "Kore kudasai!" },
+            { ch: "謝謝！", jp: "ありがとうございます！", romaji: "A-ri-ga-tou go-zai-ma-su!" },
+            { ch: "廁所在哪裡？", jp: "トイレはどこですか？", romaji: "Toire wa doko desu ka?" },
+            { ch: "好好吃！", jp: "おいしいです！", romaji: "Oishii desu!" },
+            { ch: "太可愛了！", jp: "かわいいです！", romaji: "Kawaii desu!" },
+            { ch: "不好意思...", jp: "すみません...", romaji: "Sumimasen..." }
+        ];
+
+        const LEARNING_DATA = [
+            {
+                id: 'basic', cat: "基本禮貌", color: "bg-green-100 text-green-700",
+                words: [{jp:"こんにちは", ch:"你好"}, {jp:"ありがとう", ch:"謝謝"}, {jp:"ごめんなさい", ch:"對不起"}, {jp:"トイレ", ch:"廁所"}],
+                phrase: {jp:"トイレはどこですか？", ch:"請問廁所在哪裡？", r:"Toire wa doko desu ka?"}
+            },
+            {
+                id: 'hotel', cat: "飯店住宿", color: "bg-indigo-100 text-indigo-700",
+                words: [{jp:"へや", ch:"房間"}, {jp:"かぎ", ch:"鑰匙"}, {jp:"タオル", ch:"毛巾"}, {jp:"Wi-Fi", ch:"Wi-Fi"}],
+                phrase: {jp:"チェックインおねがいします", ch:"我要辦理入住", r:"Check-in onegai shimasu"}
+            },
+            {
+                id: 'shopping', cat: "逛街購物", color: "bg-purple-100 text-purple-700",
+                words: [{jp:"いくら", ch:"多少錢"}, {jp:"ふくろ", ch:"袋子"}, {jp:"ほしい", ch:"想要"}, {jp:"めんぜい", ch:"免稅"}],
+                phrase: {jp:"ふくろをください", ch:"請給我袋子", r:"Fukuro o kudasai"}
+            },
+            {
+                id: 'transport', cat: "交通探險", color: "bg-blue-100 text-blue-700",
+                words: [{jp:"でんしゃ", ch:"電車"}, {jp:"えき", ch:"車站"}, {jp:"きっぷ", ch:"票"}, {jp:"タクシー", ch:"計程車"}],
+                phrase: {jp:"これはおおさかに行きますか？", ch:"這個去大阪嗎？", r:"Kore wa Osaka ni ikimasu ka?"}
+            },
+            {
+                id: 'emergency', cat: "緊急求助", color: "bg-gray-100 text-gray-700",
+                words: [{jp:"たすけて", ch:"幫忙"}, {jp:"まいご", ch:"迷路"}, {jp:"いたい", ch:"痛"}, {jp:"びょういん", ch:"醫院"}],
+                phrase: {jp:"まいごになりました", ch:"我迷路了", r:"Maigo ni narimashita"}
+            }
+        ];
+
+        const USJ_RIDES = [
+            { name: "瑪利歐賽車", h: 107, area: "任天堂", type: "刺激", switch: true },
+            { name: "耀西冒險", h: 86, area: "任天堂", type: "溫和", switch: false },
+            { name: "哈利波特禁忌之旅", h: 122, area: "哈利波特", type: "刺激", switch: true },
+            { name: "鷹馬的飛行", h: 92, area: "哈利波特", type: "溫和", switch: true },
+            { name: "小小兵瘋狂乘車遊", h: 102, area: "小小兵", type: "刺激", switch: true },
+            { name: "小小兵冰凍雷射光", h: 92, area: "小小兵", type: "溫和", switch: false }
+        ];
+
+        // --- 狀態變數 ---
+        let currentTab = 'itinerary';
+        let expandedDay = 3; // 預設打開 Day 3
+        let childHeight = 100;
+        let expenses = JSON.parse(localStorage.getItem('osaka_expenses')) || [];
+
+        // --- 初始化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            render();
+            lucide.createIcons();
+        });
+
+        // --- 核心渲染函數 ---
+        function render() {
+            const content = document.getElementById('app-content');
             
-            {isEditingNote ? (
-              <textarea 
-                className="w-full text-sm p-2 border border-yellow-300 rounded bg-white text-gray-700"
-                rows="3"
-                value={noteText}
-                onChange={(e) => setNoteText(e.target.value)}
-                placeholder="寫點什麼... (例如: 14:00 集合, 記得買牛奶)"
-              />
-            ) : (
-              <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                {dayData.userNotes ? dayData.userNotes : <span className="text-gray-400 italic">點擊編輯來新增筆記...</span>}
-              </p>
-            )}
-          </div>
+            // 更新按鈕樣式
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                const isActive = btn.id === `btn-${currentTab}`;
+                btn.className = `nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400'}`;
+            });
 
-          {/* Location & Desc */}
-          <div className="py-2">
-            <p className="text-gray-600 text-sm leading-relaxed mb-2">{dayData.desc}</p>
-            <div className="flex items-center gap-1 text-xs text-gray-500">
-              <MapPin size={14} />
-              <span>主要區域: {dayData.displayLocation}</span>
-            </div>
-          </div>
+            // 渲染內容
+            if (currentTab === 'itinerary') renderItinerary(content);
+            else if (currentTab === 'tools') renderTools(content);
+            else if (currentTab === 'learning') renderLearning(content);
+            else if (currentTab === 'packing') renderPacking(content);
 
-          {/* Spots */}
-          <div className="mb-4">
-            <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">今日景點</h4>
-            <div className="flex flex-wrap gap-2">
-              {dayData.spots.map((spot, idx) => (
-                <span key={idx} className="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md border border-blue-100 flex items-center gap-1">
-                  {spot.type === 'transport' && <Train size={12} />}
-                  {spot.type === 'play' && <Star size={12} />}
-                  {spot.name}
-                </span>
-              ))}
-            </div>
-          </div>
+            lucide.createIcons();
+        }
 
-          {/* Food Strategy */}
-          <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 mb-2">
-             <h4 className="text-xs font-bold text-orange-800 uppercase tracking-wider mb-2 flex items-center gap-1">
-               <Utensils size={12} /> 餐食策略
-             </h4>
-             <div className="grid grid-cols-1 gap-2 text-sm text-gray-700">
-               <div className="flex gap-2"><span className="text-orange-400 font-bold min-w-[30px]">早:</span> {dayData.meals.breakfast}</div>
-               <div className="flex gap-2"><span className="text-orange-400 font-bold min-w-[30px]">午:</span> {dayData.meals.lunch}</div>
-               <div className="flex gap-2"><span className="text-orange-400 font-bold min-w-[30px]">晚:</span> {dayData.meals.dinner}</div>
-             </div>
-             {dayData.meals.note && (
-               <div className="mt-2 pt-2 border-t border-orange-200 text-xs text-orange-700 flex gap-1">
-                 <Info size={12} className="mt-0.5" /> {dayData.meals.note}
-               </div>
-             )}
-          </div>
+        function switchTab(tab) {
+            currentTab = tab;
+            render();
+        }
 
-          {/* Google Map Section */}
-          <GoogleMapEmbed location={dayData.location} />
-          
-        </div>
-      )}
-    </div>
-  );
-};
-
-export default function App() {
-  const [activeTab, setActiveTab] = useState('itinerary');
-  const [itineraryData, setItineraryData] = useState(INITIAL_ITINERARY_DATA);
-  const [expandedDay, setExpandedDay] = useState(3); // Default open USJ day
-
-  // Update user notes
-  const handleUpdateNote = (dayId, newNote) => {
-    setItineraryData(prevData => 
-      prevData.map(day => 
-        day.day === dayId ? { ...day, userNotes: newNote } : day
-      )
-    );
-  };
-
-  return (
-    <div className="min-h-screen bg-gray-50 font-sans text-gray-900 pb-20 relative">
-      {/* App Header */}
-      <header className="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-10">
-        <div className="max-w-md mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold">大阪親子 7 日遊</h1>
-            <p className="text-xs text-blue-200">2026/04/18 - 04/24 • 2大2小</p>
-          </div>
-          <div className="bg-blue-700 p-2 rounded-full">
-            <Plane size={20} />
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-md mx-auto p-4">
-        
-        {activeTab === 'itinerary' && (
-          <div className="space-y-4 animate-fadeIn">
-            <div className="flex justify-between items-end mb-2 px-1">
-              <h2 className="text-lg font-bold text-gray-800">行程表</h2>
-              <span className="text-xs text-gray-500">點擊卡片查看地圖與詳情</span>
-            </div>
-
-            {itineraryData.map((day) => (
-              <DayCard 
-                key={day.day} 
-                dayData={day} 
-                isExpanded={expandedDay === day.day}
-                onToggle={() => setExpandedDay(expandedDay === day.day ? null : day.day)}
-                onSaveNote={handleUpdateNote}
-              />
-            ))}
-          </div>
-        )}
-
-        {activeTab === 'tools' && (
-          <div className="space-y-6 animate-fadeIn">
-             <h2 className="text-lg font-bold text-gray-800 px-1">實用工具</h2>
-             {/* Tool 1: USJ Height Check */}
-             <RideChecker />
-             
-             {/* Tool 2: Expense Tracker (New) */}
-             <ExpenseTracker />
-          </div>
-        )}
-
-        {/* 新增：日語學習 Tab 內容 */}
-        {activeTab === 'learning' && (
-          <div className="space-y-6 animate-fadeIn">
-             <h2 className="text-lg font-bold text-gray-800 px-1">旅遊日語</h2>
-             <LanguageLearning />
-          </div>
-        )}
-
-        {activeTab === 'packing' && (
-           <div className="space-y-6 animate-fadeIn">
-             <h2 className="text-lg font-bold text-gray-800 px-1">行前清單</h2>
-             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <div className="flex items-center gap-2 mb-4">
-                  <div className="p-2 bg-orange-100 rounded-lg text-orange-600">
-                    <CheckCircle size={24} />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-800">重要備忘錄</h3>
+        // --- 行程表渲染 ---
+        function renderItinerary(container) {
+            let html = `
+                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-4 text-white shadow-md mb-6 fade-in">
+                    <h2 class="font-bold text-lg mb-2">行程重點</h2>
+                    <ul class="text-sm space-y-1 text-purple-100">
+                        <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> USJ 與海遊館錯開安排</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> 兩日全日活動晚餐便利商店</li>
+                        <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> 排除生食/辣味</li>
+                    </ul>
                 </div>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-3 text-sm text-gray-700">
-                    <input type="checkbox" className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" defaultChecked />
-                    <span>下載 USJ 官方 APP (登錄門票)</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-sm text-gray-700">
-                    <input type="checkbox" className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" defaultChecked />
-                    <span>準備 100 圓硬幣 (扭蛋/置物櫃)</span>
-                  </li>
-                  <li className="flex items-center gap-3 text-sm text-gray-700">
-                    <input type="checkbox" className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
-                    <span>確認漫遊網卡/WiFi 機</span>
-                  </li>
-                   <li className="flex items-center gap-3 text-sm text-gray-700">
-                    <input type="checkbox" className="w-5 h-5 text-blue-600 rounded focus:ring-blue-500" />
-                    <span>準備兒童輕便雨衣 (USJ 濕身用)</span>
-                  </li>
-                </ul>
-             </div>
-           </div>
-        )}
-      </main>
+                <div class="space-y-4 fade-in">
+            `;
 
-      {/* Bottom Navigation Bar */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-20 pb-safe">
-        <div className="max-w-md mx-auto flex justify-around items-center h-16">
-          <button 
-            onClick={() => setActiveTab('itinerary')}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${activeTab === 'itinerary' ? 'text-blue-600' : 'text-gray-400'}`}
-          >
-            <Home size={24} strokeWidth={activeTab === 'itinerary' ? 2.5 : 2} />
-            <span className="text-[10px] font-medium">行程</span>
-          </button>
-          
-          <button 
-            onClick={() => setActiveTab('tools')}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${activeTab === 'tools' ? 'text-blue-600' : 'text-gray-400'}`}
-          >
-            <Settings size={24} strokeWidth={activeTab === 'tools' ? 2.5 : 2} />
-            <span className="text-[10px] font-medium">工具</span>
-          </button>
+            ITINERARY_DATA.forEach(day => {
+                const isExpanded = expandedDay === day.day;
+                const intensityColor = day.intensity >= 8 ? "bg-red-100 text-red-800" : (day.intensity >= 5 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800");
+                const intensityLabel = day.intensity >= 8 ? "高強度" : (day.intensity >= 5 ? "中等" : "輕鬆");
+                
+                html += `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-500' : ''}">
+                        <div class="p-4 flex items-center justify-between cursor-pointer" onclick="toggleDay(${day.day})">
+                            <div class="flex items-center gap-4">
+                                <div class="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-lg text-gray-600 font-bold">
+                                    <span class="text-xs uppercase">Day</span>
+                                    <span class="text-xl">${day.day}</span>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-gray-500">${day.date}</div>
+                                    <h3 class="text-lg font-bold text-gray-800">${day.title}</h3>
+                                </div>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-xs font-bold ${intensityColor}">${intensityLabel}</span>
+                        </div>
+                        
+                        ${isExpanded ? `
+                        <div class="p-4 pt-0 border-t border-gray-100 mt-2 bg-gray-50/50">
+                            <div class="py-3">
+                                <p class="text-gray-600 text-sm leading-relaxed mb-2">${day.desc}</p>
+                                <div class="flex items-center gap-1 text-xs text-gray-500">
+                                    <i data-lucide="map-pin" class="w-3 h-3"></i> 區域: ${day.displayLoc}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <div class="flex flex-wrap gap-2">
+                                    ${day.spots.map(s => `<span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md border border-blue-100">${s}</span>`).join('')}
+                                </div>
+                            </div>
 
-          {/* 新增：日語按鈕 */}
-          <button 
-            onClick={() => setActiveTab('learning')}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${activeTab === 'learning' ? 'text-blue-600' : 'text-gray-400'}`}
-          >
-            <BookOpen size={24} strokeWidth={activeTab === 'learning' ? 2.5 : 2} />
-            <span className="text-[10px] font-medium">日語</span>
-          </button>
+                            <div class="bg-orange-50 p-3 rounded-lg border border-orange-100 mb-3">
+                                <h4 class="text-xs font-bold text-orange-800 mb-2 flex items-center gap-1"><i data-lucide="utensils" class="w-3 h-3"></i> 餐食</h4>
+                                <div class="grid grid-cols-1 gap-1 text-sm text-gray-700">
+                                    <div><span class="text-orange-400 font-bold">早:</span> ${day.meals.b}</div>
+                                    <div><span class="text-orange-400 font-bold">午:</span> ${day.meals.l}</div>
+                                    <div><span class="text-orange-400 font-bold">晚:</span> ${day.meals.d}</div>
+                                </div>
+                            </div>
 
-          <button 
-            onClick={() => setActiveTab('packing')}
-            className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${activeTab === 'packing' ? 'text-blue-600' : 'text-gray-400'}`}
-          >
-            <List size={24} strokeWidth={activeTab === 'packing' ? 2.5 : 2} />
-            <span className="text-[10px] font-medium">清單</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
+                            <div class="rounded-lg overflow-hidden border border-gray-200 shadow-inner relative h-48 bg-gray-200">
+                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.location)}" target="_blank" class="absolute top-2 right-2 bg-white/90 px-3 py-1 rounded-full text-xs font-bold text-blue-600 shadow-sm z-10 flex items-center gap-1">
+                                    <i data-lucide="external-link" class="w-3 h-3"></i> 開啟地圖
+                                </a>
+                                <iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=${encodeURIComponent(day.location)}&t=&z=14&ie=UTF8&iwloc=&output=embed"></iframe>
+                            </div>
+                        </div>` : ''}
+                    </div>
+                `;
+            });
+            
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function toggleDay(day) {
+            expandedDay = expandedDay === day ? null : day;
+            render();
+        }
+
+        // --- 工具頁渲染 ---
+        function renderTools(container) {
+            let rideHtml = '';
+            USJ_RIDES.forEach(ride => {
+                const ok = childHeight >= ride.h;
+                rideHtml += `
+                    <div class="p-3 rounded-lg border flex items-center justify-between ${ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} mb-2">
+                        <div>
+                            <div class="font-bold text-gray-800 text-sm">${ride.name}</div>
+                            <div class="text-xs text-gray-500">${ride.area} | ${ride.type}</div>
+                            ${!ok && ride.switch ? '<span class="text-[10px] text-orange-600 font-bold block">💡 可用 Child Switch</span>' : ''}
+                        </div>
+                        <div class="ml-2">
+                            ${ok ? '<i data-lucide="check-circle" class="text-green-600 w-5 h-5"></i>' : `<div class="text-center"><i data-lucide="x-circle" class="text-red-500 w-5 h-5 mx-auto"></i><span class="text-[10px] text-red-500 font-bold">${ride.h}cm+</span></div>`}
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 記帳列表
+            const total = expenses.reduce((sum, item) => sum + item.amount, 0);
+            const expenseList = expenses.length === 0 ? '<p class="text-center text-gray-400 text-xs py-4">尚未有記錄</p>' : expenses.map(item => `
+                <div class="flex justify-between items-center p-2 border-b border-gray-100 last:border-0">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-medium text-gray-700">${item.desc}</span>
+                        <span class="text-xs text-gray-400">${item.time}</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="font-bold text-gray-800">¥ ${item.amount.toLocaleString()}</span>
+                        <button onclick="deleteExpense(${item.id})" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="space-y-6 fade-in">
+                    <!-- USJ 身高檢測 -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="baby" class="w-6 h-6"></i></div>
+                            <h3 class="text-lg font-bold text-gray-800">USJ 設施快篩</h3>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                身高: <span class="text-blue-600 font-bold text-xl">${childHeight} cm</span>
+                            </label>
+                            <input type="range" min="80" max="140" value="${childHeight}" oninput="updateHeight(this.value)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            <div class="flex justify-between text-xs text-gray-400 mt-1"><span>80cm</span><span>100cm</span><span>115cm</span><span>140cm</span></div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2">${rideHtml}</div>
+                    </div>
+
+                    <!-- 記帳本 -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="p-2 bg-yellow-100 rounded-lg text-yellow-600"><i data-lucide="dollar-sign" class="w-6 h-6"></i></div>
+                            <h3 class="text-lg font-bold text-gray-800">簡易記帳</h3>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg mb-4 flex gap-2">
+                            <input type="text" id="ex-desc" placeholder="項目" class="flex-1 p-2 border border-gray-300 rounded-md text-sm">
+                            <input type="number" id="ex-amount" placeholder="¥" class="w-20 p-2 border border-gray-300 rounded-md text-sm">
+                            <button onclick="addExpense()" class="bg-blue-600 text-white p-2 rounded-md"><i data-lucide="plus" class="w-5 h-5"></i></button>
+                        </div>
+                        <div class="text-right text-sm text-gray-600">總支出: <span class="text-2xl font-bold text-gray-800">¥ ${total.toLocaleString()}</span></div>
+                        <div class="max-h-60 overflow-y-auto mt-2">${expenseList}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateHeight(val) { childHeight = parseInt(val); render(); }
+        
+        function addExpense() {
+            const desc = document.getElementById('ex-desc').value;
+            const amount = document.getElementById('ex-amount').value;
+            if(!desc || !amount) return;
+            expenses.unshift({ id: Date.now(), desc, amount: parseInt(amount), time: new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}) });
+            localStorage.setItem('osaka_expenses', JSON.stringify(expenses));
+            render();
+        }
+
+        function deleteExpense(id) {
+            expenses = expenses.filter(e => e.id !== id);
+            localStorage.setItem('osaka_expenses', JSON.stringify(expenses));
+            render();
+        }
+
+        // --- 日語學習渲染 ---
+        function renderLearning(container) {
+            const randomPhrase = DAILY_PHRASES[Math.floor(Math.random() * DAILY_PHRASES.length)];
+            
+            let categoriesHtml = LEARNING_DATA.map(cat => `
+                <div class="border-t border-gray-100 pt-4 first:border-0 first:pt-0">
+                    <h4 class="text-md font-bold mb-3 px-2 py-1 rounded inline-block ${cat.color}">${cat.cat}</h4>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        ${cat.words.map(w => `
+                            <div onclick="speak('${w.jp}')" class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center active:scale-95 transition-transform cursor-pointer relative group">
+                                <div class="absolute top-1 right-1 text-gray-300"><i data-lucide="volume-2" class="w-3 h-3"></i></div>
+                                <div class="text-xl font-bold text-gray-800">${w.jp}</div>
+                                <div class="text-sm text-gray-500">${w.ch}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div onclick="speak('${cat.phrase.jp}')" class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-start gap-3 cursor-pointer">
+                        <div class="p-2 bg-blue-100 rounded-full text-blue-600 mt-1"><i data-lucide="play-circle" class="w-4 h-4"></i></div>
+                        <div>
+                            <div class="text-xs font-bold text-blue-500">挑戰說一句：</div>
+                            <div class="text-lg font-bold text-gray-800">${cat.phrase.jp}</div>
+                            <div class="text-sm text-blue-700">${cat.phrase.r}</div>
+                            <div class="text-sm text-gray-500">${cat.phrase.ch}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="space-y-6 fade-in">
+                    <!-- 每日一句 -->
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-500 p-4 rounded-xl shadow-md text-white text-center cursor-pointer" onclick="speak('${randomPhrase.jp}')">
+                        <div class="flex justify-center items-center gap-2 mb-2">
+                            <i data-lucide="star" class="text-yellow-300 fill-current w-5 h-5"></i>
+                            <h3 class="text-lg font-bold">每日一句挑戰 (點擊發音)</h3>
+                        </div>
+                        <div class="text-3xl font-bold mb-1">${randomPhrase.jp}</div>
+                        <div class="text-sm font-medium text-pink-100 mb-1">${randomPhrase.romaji}</div>
+                        <div class="text-xl font-bold">${randomPhrase.ch}</div>
+                    </div>
+                    
+                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                        ${categoriesHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 行前清單渲染 ---
+        function renderPacking(container) {
+            container.innerHTML = `
+                <div class="space-y-6 fade-in">
+                    <h2 class="text-lg font-bold text-gray-800 px-1">行前清單</h2>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <ul class="space-y-3">
+                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600" checked> 下載 USJ 官方 APP</li>
+                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600" checked> 準備 100 圓硬幣</li>
+                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600"> 確認漫遊/WiFi</li>
+                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600"> 兒童輕便雨衣</li>
+                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600"> 護照 (有效期6個月以上)</li>
+                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600"> 常用藥品 (退燒/腸胃)</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- TTS 語音 ---
+        function speak(text) {
+            if (!window.speechSynthesis) { alert("瀏覽器不支援語音"); return; }
+            window.speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = 'ja-JP'; u.rate = 0.9;
+            window.speechSynthesis.speak(u);
+        }
+    </script>
+</body>
+</html>
