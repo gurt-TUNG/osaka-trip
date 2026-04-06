@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大阪親子7日遊</title>
+    <title>大阪親子7日遊04061</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -26,7 +26,7 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Modal 樣式 */
+        /* 彈出視窗樣式 */
         #modal-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0,0,0,0.6); z-index: 100;
@@ -36,25 +36,39 @@
             background: white; padding: 20px; border-radius: 16px; width: 100%; max-width: 400px;
             max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
+
+        /* 載入動畫樣式 */
+        #loading-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.8); z-index: 999;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1); border-left-color: #2563eb;
+            border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
+    <!-- 頂部標題 -->
     <header class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-50 pt-safe">
         <div class="max-w-md mx-auto flex justify-between items-center pt-2">
             <div>
                 <h1 class="text-xl font-bold">大阪親子 7 日遊</h1>
-                <p class="text-xs text-blue-200">2026/04/18 - 04/24 • 2大2小</p>
+                <p class="text-xs text-blue-200" id="sync-status">2026/04/18 - 04/24 • 2大2小</p>
             </div>
-            <div class="bg-blue-700 p-2 rounded-full shadow-inner">
-                <i data-lucide="plane" class="w-5 h-5"></i>
+            <div class="bg-blue-700 p-2 rounded-full shadow-inner cursor-pointer" onclick="cloudSync()">
+                <i data-lucide="cloud-sync" class="w-5 h-5"></i>
             </div>
         </div>
     </header>
 
+    <!-- 主要內容區 -->
     <main id="app-content" class="max-w-md mx-auto p-4 min-h-screen"></main>
 
-    <!-- 底部導航列 (新增 SOS) -->
+    <!-- 底部導航列 -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-40 pb-safe">
         <div class="max-w-md mx-auto flex justify-around items-center h-16 pb-1 px-1">
             <button onclick="switchTab('itinerary')" class="nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400" id="btn-itinerary">
@@ -75,21 +89,29 @@
         </div>
     </nav>
 
-    <!-- Modal 彈出視窗 -->
+    <!-- Modal 資訊彈出視窗 -->
     <div id="modal-overlay" onclick="if(event.target === this) closeModal()">
         <div id="modal-content" class="relative">
             <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800 bg-gray-100 rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
             <h3 id="modal-title" class="text-xl font-bold text-gray-800 mb-2 pr-8"></h3>
             <div id="modal-body" class="mb-4"></div>
-            <div id="modal-actions" class="flex gap-2 mt-4"></div>
         </div>
     </div>
 
+    <!-- 載入中動畫 -->
+    <div id="loading-overlay">
+        <div class="spinner mb-4"></div>
+        <p id="loading-text" class="text-blue-700 font-bold tracking-wider">處理中...</p>
+    </div>
+
     <script>
-        // --- 常數與資料庫 ---
+        // === 核心設定與 API ===
         const HOTEL_ADDRESS = "大阪市西成区北開一丁目1番27号";
-        const EXCHANGE_RATE = 0.21; // 日幣轉台幣預估匯率
+        const EXCHANGE_RATE = 0.21;
+        // 您提供的專屬 Google Apps Script 網址
+        const API_URL = "https://script.google.com/macros/s/AKfycbwDmOWroNSekoK1ekr0mQDgCxlXY7LbQbWue_67hGmJNgq-2ZQ6N60oFUjTWn5wGaOD2w/exec";
         
+        // --- 行程資料庫 ---
         const ITINERARY_DATA = [
             {
                 day: 1, date: "4/18 (六)", title: "抵達神戶 ➡️ 道頓堀", intensity: 5, location: "Dotonbori", displayLoc: "神戶機場 -> 大阪市區",
@@ -135,28 +157,43 @@
             }
         ];
 
-        // 景點深度介紹資料庫
         const SPOT_DETAILS = {
-            "道頓堀/心齋橋": { desc: "大阪最熱鬧的美食與購物商圈。這裡有著名的巨大立體招牌（螃蟹、章魚等），非常吸引小朋友目光。人潮擁擠，請務必牽好小朋友的手。", img: "" },
-            "跑跑人看板": { desc: "固力果(Glico)跑跑人是大阪最具代表性的打卡地標，位於戎橋旁。晚上點燈後非常漂亮。", img: "" },
-            "天王寺動物園": { desc: "擁有超過百年歷史的市區動物園。佔地不大，地勢平坦，小朋友走起來不費力。可以看到河馬、獅子等受歡迎的動物。", img: "" },
-            "新世界老街": { desc: "充滿昭和時代復古風情的老街，是大阪「串炸」的發源地。串炸多為熟食，沾醬甜甜的，小朋友通常接受度很高。", img: "" },
-            "清水寺": { desc: "京都最著名的木造寺廟，擁有懸空的「清水舞台」。前往寺廟有一段上坡路（松原通），建議慢慢走，沿途有很多試吃可以安撫小孩。", img: "" },
-            "超級任天堂世界": { desc: "USJ最受歡迎的園區！建議購買「能量手環」，小朋友可以在園區內敲擊問號磚塊收集金幣，互動性極佳。（注意：瑪利歐賽車需滿107cm）", img: "" },
-            "Nintendo OSAKA": { desc: "位於大丸梅田百貨13樓的任天堂官方直營店！販售獨家周邊商品，旁邊就是巨大的 Pokémon Center，是小朋友的購物天堂。", img: "" },
-            "海遊館 (鯨鯊)": { desc: "世界最大級的水族館之一。最大特色是設計成「螺旋狀緩坡」，搭電梯到頂樓後一路往下走，不需爬樓梯，對家庭客極度友善。巨大的鯨鯊是必看重點。", img: "" },
-            "關西機場": { desc: "回程航班為 20:55，建議於 18:30 前抵達機場辦理報到與托運行李，並預留時間進行安檢。", img: "" }
+            "道頓堀/心齋橋": { desc: "大阪最熱鬧的美食購物商圈。著名的巨大立體招牌非常吸引小朋友。人潮擁擠，請牽好小朋友。", img: "" },
+            "跑跑人看板": { desc: "固力果跑跑人是大阪代表性地標。晚上點燈後非常漂亮，適合全家合照。", img: "" },
+            "天王寺動物園": { desc: "百年歷史市區動物園，佔地不大、地勢平坦，小朋友走起來不費力。", img: "" },
+            "新世界老街": { desc: "復古風情老街，串炸發源地。串炸多為熟食，沾醬甜甜的，小朋友接受度高。", img: "" },
+            "清水寺": { desc: "京都著名木造寺廟。前往寺廟有上坡路，建議慢慢走，沿途可逛伴手禮店。", img: "" },
+            "超級任天堂世界": { desc: "USJ最受歡迎園區！建議買「能量手環」敲金幣。（注意：瑪利歐賽車需滿107cm）", img: "" },
+            "Nintendo OSAKA": { desc: "大丸梅田13樓的任天堂官方店！販售獨家周邊，旁邊是寶可夢中心，小朋友的天堂。", img: "" },
+            "海遊館 (鯨鯊)": { desc: "世界最大級水族館之一。「螺旋狀緩坡」設計不需爬樓梯，對家庭極度友善。", img: "" },
+            "關西機場": { desc: "20:55 航班，建議 18:30 前抵達辦理報到與托運。", img: "" }
         };
 
         const EXPENSE_CATEGORIES = [
-            { id: 'food', icon: '🍔', label: '飲食', color: '#f97316' }, // orange
-            { id: 'shopping', icon: '🛍️', label: '購物', color: '#a855f7' }, // purple
-            { id: 'transport', icon: '🚃', label: '交通', color: '#3b82f6' }, // blue
-            { id: 'ticket', icon: '🎟️', label: '門票', color: '#ef4444' }, // red
-            { id: 'other', icon: '📦', label: '其他', color: '#9ca3af' }  // gray
+            { id: 'food', icon: '🍔', label: '飲食', color: '#f97316' },
+            { id: 'shopping', icon: '🛍️', label: '購物', color: '#a855f7' },
+            { id: 'transport', icon: '🚃', label: '交通', color: '#3b82f6' },
+            { id: 'ticket', icon: '🎟️', label: '門票', color: '#ef4444' },
+            { id: 'other', icon: '📦', label: '其他', color: '#9ca3af' }
         ];
 
-        // --- APP 狀態中心 ---
+        // --- 舊資料升級與防呆工具函數 ---
+        // 這個函數會把舊版的記帳資料自動補齊「台幣換算」跟「分類」，避免程式當機
+        function sanitizeExpenses(expensesList) {
+            if (!Array.isArray(expensesList)) return [];
+            expensesList.forEach(e => {
+                if (e.twd === undefined) {
+                    e.jpy = e.amount || 0; // 舊版的 amount 變成 jpy
+                    e.twd = Math.round(e.jpy * EXCHANGE_RATE);
+                    e.catId = e.catId || 'other';
+                    e.formula = e.formula || String(e.jpy);
+                    e.day = e.day || 1;
+                }
+            });
+            return expensesList;
+        }
+
+        // --- APP 狀態 ---
         const DEFAULT_STATE = {
             expenses: [], 
             packing: [
@@ -167,13 +204,14 @@
                 { id: 5, text: "兒童輕便雨衣", checked: false },
                 { id: 6, text: "常用藥品 (退燒/腸胃)", checked: false }
             ],
-            customSpots: {},
-            completedSpots: {},
-            hiddenDays: {}
+            customSpots: {}, completedSpots: {}, hiddenDays: {}
         };
 
         let appState = JSON.parse(localStorage.getItem('osaka_app_state')) || DEFAULT_STATE;
+        
+        // 執行防呆初始化與舊資料修復
         if(!appState.expenses) appState.expenses = [];
+        appState.expenses = sanitizeExpenses(appState.expenses); // 修復舊記帳資料！
         if(!appState.packing) appState.packing = DEFAULT_STATE.packing;
         if(!appState.customSpots) appState.customSpots = {};
         if(!appState.completedSpots) appState.completedSpots = {};
@@ -184,10 +222,121 @@
         let currentTab = 'itinerary';
         let expandedDay = 1;
         let childHeight = 100;
-        let expandedSOS = null; // 用於紀錄哪一個 SOS 卡片被展開
+        let randomPhrase = { ch: "請叫救護車！", jp: "きゅうきゅうしゃをよんでください！", romaji: "Kyuukyuusha o yonde kudasai!" };
+        let expandedSOS = null;
 
         // --- 初始化 ---
-        document.addEventListener('DOMContentLoaded', () => { render(); });
+        document.addEventListener('DOMContentLoaded', () => { 
+            cyclePhrase(); 
+            render(); 
+            // 啟動時自動在背景與 Google Sheets 同步
+            backgroundSync();
+        });
+
+        // ==========================================
+        // ☁️ 雲端同步核心邏輯 (Google Sheets API)
+        // ==========================================
+
+        function showLoading(show, text="處理中...") {
+            const overlay = document.getElementById('loading-overlay');
+            document.getElementById('loading-text').innerText = text;
+            overlay.style.display = show ? 'flex' : 'none';
+        }
+
+        // 手動點擊同步
+        async function cloudSync() {
+            showLoading(true, "正在與 Google Sheets 同步資料...");
+            await performSync();
+            showLoading(false);
+            render();
+            document.getElementById('sync-status').innerText = "已於 " + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}) + " 同步";
+            alert("🎉 雲端雙向同步完成！\n\n您的資料已與 Google Sheets 同步，且可點擊 Sheet 選單轉換為報表。");
+        }
+
+        // 背景自動同步 (不打擾使用者)
+        async function backgroundSync() {
+            try {
+                document.getElementById('sync-status').innerText = "☁️ 背景同步中...";
+                await performSync();
+                render();
+                document.getElementById('sync-status').innerText = "已於 " + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}) + " 同步";
+            } catch (e) {
+                console.log("背景同步失敗:", e);
+                document.getElementById('sync-status').innerText = "⚠️ 離線模式";
+            }
+        }
+
+        // 核心同步邏輯 (抓取 -> 合併 -> 上傳)
+        async function performSync() {
+            try {
+                // 1. 抓取雲端資料
+                const res = await fetch(API_URL);
+                const result = await res.json();
+                
+                let cloudState = DEFAULT_STATE;
+                if (result.status === "success" && result.data && result.data !== "{}") {
+                    cloudState = JSON.parse(result.data);
+                }
+
+                // 2. 智慧合併 (Local + Cloud)
+                let mergedState = { ...appState };
+                
+                // 合併記帳 (以 ID 為準比對)
+                if (cloudState.expenses) {
+                    cloudState.expenses = sanitizeExpenses(cloudState.expenses); // 也一併清洗雲端的舊資料
+                    cloudState.expenses.forEach(cEx => {
+                        const exists = mergedState.expenses.some(mEx => mEx.id === cEx.id);
+                        if (!exists) mergedState.expenses.push(cEx);
+                    });
+                    mergedState.expenses.sort((a, b) => b.id - a.id); // 依時間排序
+                }
+
+                // 合併清單
+                if (cloudState.packing) {
+                    cloudState.packing.forEach(cPk => {
+                        const mPk = mergedState.packing.find(p => p.text === cPk.text);
+                        if (mPk) {
+                            mPk.checked = mPk.checked || cPk.checked; // 只要一方打勾就維持打勾
+                        } else {
+                            mergedState.packing.push(cPk);
+                        }
+                    });
+                }
+
+                // 合併狀態
+                mergedState.completedSpots = { ...cloudState.completedSpots, ...mergedState.completedSpots };
+                mergedState.hiddenDays = { ...cloudState.hiddenDays, ...mergedState.hiddenDays };
+
+                // 合併自訂行程
+                if (cloudState.customSpots) {
+                    Object.keys(cloudState.customSpots).forEach(day => {
+                        if (!mergedState.customSpots[day]) mergedState.customSpots[day] = [];
+                        cloudState.customSpots[day].forEach(cSpot => {
+                            const exists = mergedState.customSpots[day].some(mSpot => mSpot.text === cSpot.text);
+                            if (!exists) mergedState.customSpots[day].push(cSpot);
+                        });
+                    });
+                }
+
+                // 3. 儲存合併結果到本地
+                appState = mergedState;
+                saveState();
+
+                // 4. 上傳合併後的最新資料回 Google Sheets
+                await fetch(API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ data: JSON.stringify(appState) })
+                });
+
+            } catch (err) {
+                throw err;
+            }
+        }
+
+
+        // ==========================================
+        // 🎨 UI 渲染邏輯
+        // ==========================================
 
         function render() {
             const content = document.getElementById('app-content');
@@ -221,9 +370,9 @@
                 
                 if (isHidden) {
                     html += `
-                        <div class="bg-gray-100 rounded-xl p-3 flex justify-between items-center opacity-70 border border-gray-200">
+                        <div class="bg-gray-100 rounded-xl p-3 flex justify-between items-center opacity-70 border border-gray-200 shadow-sm">
                             <span class="text-sm font-bold text-gray-500">Day ${day.day} - 已隱藏</span>
-                            <button onclick="toggleHideDay(${day.day})" class="text-xs text-blue-600 border border-blue-600 px-3 py-1.5 rounded-md bg-white font-bold">顯示行程</button>
+                            <button onclick="toggleHideDay(${day.day})" class="text-xs text-blue-600 border border-blue-600 px-3 py-1.5 rounded-md bg-white font-bold shadow-sm">顯示行程</button>
                         </div>
                     `;
                     return;
@@ -241,7 +390,7 @@
                     const hasInfo = SPOT_DETAILS[s] ? true : false;
                     
                     spotsHtml += `
-                        <div class="flex items-center justify-between gap-2 mb-2 p-2.5 bg-blue-50 rounded-xl border border-blue-100 shadow-sm">
+                        <div class="flex items-center justify-between gap-2 mb-2 p-2.5 bg-blue-50/80 rounded-xl border border-blue-100 shadow-sm">
                             <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleCompleteSpot('${spotKey}')">
                                 <input type="checkbox" ${isCompleted ? 'checked' : ''} class="w-5 h-5 accent-blue-600 pointer-events-none rounded">
                                 <span class="text-base flex-1 ${isCompleted ? 'line-through text-gray-400' : 'text-blue-900 font-bold'}">${s}</span>
@@ -258,12 +407,12 @@
                     const spotKey = `custom-${cs.id}`;
                     const isCompleted = appState.completedSpots[spotKey];
                     spotsHtml += `
-                        <div class="flex items-center justify-between gap-2 mb-2 p-2.5 bg-purple-50 rounded-xl border border-purple-100 shadow-sm">
+                        <div class="flex items-center justify-between gap-2 mb-2 p-2.5 bg-purple-50/80 rounded-xl border border-purple-100 shadow-sm">
                             <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleCompleteSpot('${spotKey}')">
                                 <input type="checkbox" ${isCompleted ? 'checked' : ''} class="w-5 h-5 accent-purple-600 pointer-events-none rounded">
                                 <span class="text-base flex-1 ${isCompleted ? 'line-through text-gray-400' : 'text-purple-900 font-bold'}">${cs.text}</span>
                             </div>
-                            <div class="flex gap-1">
+                            <div class="flex gap-1 flex-shrink-0">
                                 <a href="${getMapLink(cs.text + ' 大阪')}" target="_blank" class="p-1.5 bg-white rounded-md border border-purple-200 text-purple-600 hover:bg-purple-100 flex items-center gap-1 text-xs font-bold"><i data-lucide="map" class="w-4 h-4"></i></a>
                                 <button onclick="deleteCustomSpot(${day.day}, ${cs.id})" class="p-1.5 bg-red-50 rounded-md border border-red-200 text-red-500 hover:bg-red-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
@@ -275,7 +424,7 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-500' : ''}">
                         <div class="p-4 flex items-center justify-between cursor-pointer bg-white" onclick="toggleDay(${day.day})">
                             <div class="flex items-center gap-3">
-                                <div class="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-xl text-gray-600 font-bold">
+                                <div class="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-xl text-gray-600 font-bold shadow-inner">
                                     <span class="text-[10px] uppercase tracking-wider">Day</span>
                                     <span class="text-xl">${day.day}</span>
                                 </div>
@@ -288,17 +437,16 @@
                         </div>
                         
                         ${isExpanded ? `
-                        <div class="p-4 pt-2 border-t border-gray-100 bg-gray-50/30">
+                        <div class="p-4 pt-2 border-t border-gray-100 bg-gray-50/50">
                             <div class="flex justify-end mb-3">
                                 <button onclick="toggleHideDay(${day.day})" class="text-xs text-gray-500 hover:text-gray-800 flex items-center gap-1 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm"><i data-lucide="eye-off" class="w-4 h-4"></i> 隱藏此日行程</button>
                             </div>
-                            <p class="text-gray-600 text-sm leading-relaxed mb-4">${day.desc}</p>
+                            <p class="text-gray-600 text-sm leading-relaxed mb-4 border-l-2 border-blue-400 pl-3">${day.desc}</p>
                             
                             <div class="mb-5">
-                                <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">行程地標 (點擊打勾完成)</h4>
+                                <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">行程地標 (點擊打勾)</h4>
                                 ${spotsHtml}
                                 
-                                <!-- 固定住宿點 -->
                                 <div class="flex items-center justify-between gap-2 mt-3 mb-2 p-2.5 bg-indigo-50 rounded-xl border border-indigo-200 shadow-sm">
                                     <div class="flex items-center gap-2 flex-1">
                                         <i data-lucide="moon" class="w-5 h-5 text-indigo-500"></i>
@@ -311,7 +459,7 @@
 
                                 <div class="flex gap-2 mt-3">
                                     <input type="text" id="add-spot-${day.day}" placeholder="臨時加行程..." class="flex-1 border border-gray-300 p-2.5 text-sm rounded-lg bg-white shadow-inner">
-                                    <button onclick="addCustomSpot(${day.day})" class="bg-gray-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold whitespace-nowrap shadow hover:bg-black transition-colors">新增</button>
+                                    <button onclick="addCustomSpot(${day.day})" class="bg-gray-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-black transition-colors">新增</button>
                                 </div>
                             </div>
 
@@ -335,16 +483,17 @@
         function showSpotInfo(spotName) {
             const info = SPOT_DETAILS[spotName];
             if(!info) return;
-            showModal(
-                `ℹ️ ${spotName}`,
-                `<div class="mt-2 text-sm text-gray-700 leading-relaxed">${info.desc}</div>
-                 <div class="mt-4 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center h-40 border border-gray-200">
+            document.getElementById('modal-title').innerText = `ℹ️ ${spotName}`;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="mt-2 text-sm text-gray-700 leading-relaxed">${info.desc}</div>
+                <div class="mt-4 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center h-40 border border-gray-200 shadow-inner">
                     <span class="text-xs text-gray-400 font-mono">${info.img}</span>
-                 </div>`,
-                '', true, false
-            );
+                </div>
+            `;
+            document.getElementById('modal-overlay').style.display = 'flex';
         }
-
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+        
         function toggleDay(day) { expandedDay = expandedDay === day ? null : day; render(); }
         function toggleHideDay(day) { appState.hiddenDays[day] = !appState.hiddenDays[day]; render(); }
         function toggleCompleteSpot(key) { appState.completedSpots[key] = !appState.completedSpots[key]; render(); }
@@ -354,10 +503,15 @@
             if (!appState.customSpots[day]) appState.customSpots[day] = [];
             appState.customSpots[day].push({ id: Date.now(), text: input.value.trim() });
             render();
+            backgroundSync();
         }
-        function deleteCustomSpot(day, id) { appState.customSpots[day] = appState.customSpots[day].filter(s => s.id !== id); render(); }
+        function deleteCustomSpot(day, id) { 
+            appState.customSpots[day] = appState.customSpots[day].filter(s => s.id !== id); 
+            render(); 
+            backgroundSync();
+        }
 
-        // --- 2. 記帳工具頁 (統計圓餅圖與算式強化) ---
+        // --- 2. 記帳工具頁 ---
         function renderTools(container) {
             let totalTWD = 0;
             let stats = { food:0, shopping:0, transport:0, ticket:0, other:0 };
@@ -371,7 +525,7 @@
                 return `
                 <div class="flex justify-between items-center p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50">
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-lg shadow-sm">${catObj.icon}</div>
+                        <div class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg shadow-sm">${catObj.icon}</div>
                         <div class="flex flex-col">
                             <span class="text-sm font-bold text-gray-800">${item.desc}</span>
                             <span class="text-[10px] text-gray-400 font-mono">Day ${item.day} • ¥${item.formula || item.jpy}</span>
@@ -391,11 +545,10 @@
             const catOptions = EXPENSE_CATEGORIES.map(c => `<option value="${c.id}">${c.icon} ${c.label}</option>`).join('');
             const dayOptions = [1,2,3,4,5,6,7].map(d => `<option value="${d}">Day ${d}</option>`).join('');
 
-            // 產生純 CSS 的圓餅圖 (Conic Gradient)
+            // 圓餅圖 CSS
             let conicStops = [];
             let currentPct = 0;
             let hasData = false;
-            
             EXPENSE_CATEGORIES.forEach(c => {
                 const val = stats[c.id];
                 if(val > 0) {
@@ -408,16 +561,15 @@
             const pieStyle = hasData ? `background: conic-gradient(${conicStops.join(', ')});` : `background: #f3f4f6;`;
             const chartHtml = `
                 <div class="flex justify-center mb-6 mt-4">
-                    <div class="relative w-40 h-40 rounded-full shadow-sm" style="${pieStyle}">
+                    <div class="relative w-40 h-40 rounded-full shadow-md border-4 border-white" style="${pieStyle}">
                         <div class="absolute inset-3 bg-white rounded-full flex items-center justify-center flex-col shadow-inner">
-                            <span class="text-xs text-gray-500">總花費</span>
-                            <span class="text-sm font-bold text-gray-800">NT$ ${totalTWD.toLocaleString()}</span>
+                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">總花費</span>
+                            <span class="text-sm font-black text-gray-800">NT$ ${totalTWD.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
             `;
 
-            // 進度條統計
             const maxStat = Math.max(...Object.values(stats), 1);
             let statsHtml = EXPENSE_CATEGORIES.map(c => {
                 const val = stats[c.id];
@@ -425,14 +577,50 @@
                 const pct = (val / maxStat) * 100;
                 return `
                 <div class="mb-3">
-                    <div class="flex justify-between text-xs mb-1"><span>${c.icon} ${c.label}</span><span class="font-bold text-gray-700">NT$ ${val.toLocaleString()}</span></div>
-                    <div class="w-full bg-gray-100 rounded-full h-2 shadow-inner"><div class="h-2 rounded-full" style="width: ${pct}%; background-color: ${c.color}"></div></div>
+                    <div class="flex justify-between text-xs mb-1.5"><span class="font-bold flex items-center gap-1">${c.icon} ${c.label}</span><span class="font-bold text-gray-700">NT$ ${val.toLocaleString()}</span></div>
+                    <div class="w-full bg-gray-200 rounded-full h-2 shadow-inner"><div class="h-2 rounded-full shadow-sm" style="width: ${pct}%; background-color: ${c.color}"></div></div>
                 </div>`;
             }).join('');
             if(!statsHtml) statsHtml = '<p class="text-xs text-gray-400 text-center">目前沒有分類資料</p>';
 
+            // USJ 身高快篩
+            let rideHtml = '';
+            USJ_RIDES.forEach(ride => {
+                const ok = childHeight >= ride.h;
+                rideHtml += `
+                    <div class="p-3 rounded-xl border flex items-center justify-between ${ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} mb-2 shadow-sm">
+                        <div>
+                            <div class="font-bold text-gray-800 text-sm">${ride.name}</div>
+                            <div class="text-xs text-gray-500">${ride.area} | ${ride.type}</div>
+                            ${!ok && ride.switch ? '<span class="text-[10px] text-orange-600 font-bold block mt-1">💡 可用 Child Switch (輪流乘坐)</span>' : ''}
+                        </div>
+                        <div class="ml-2">
+                            ${ok ? '<i data-lucide="check-circle" class="text-green-600 w-6 h-6"></i>' : `<div class="text-center"><i data-lucide="x-circle" class="text-red-500 w-5 h-5 mx-auto"></i><span class="text-[10px] text-red-500 font-bold block mt-1">${ride.h}cm+</span></div>`}
+                        </div>
+                    </div>
+                `;
+            });
+
             container.innerHTML = `
                 <div class="space-y-6 fade-in pt-2">
+                    
+                    <!-- 資料備份與雲端同步中心 -->
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-md text-white">
+                        <h3 class="text-lg font-bold mb-2 flex items-center gap-2"><i data-lucide="cloud-sync" class="w-5 h-5"></i> 雲端雙向同步 (Google Sheets)</h3>
+                        <p class="text-xs text-indigo-100 mb-4 leading-relaxed">一鍵將資料與雲端同步，兩支手機隨時保持最新狀態！您也可以在電腦打開 Excel 表格查看。</p>
+                        
+                        <div class="mb-4">
+                            <button onclick="cloudSync()" class="w-full bg-white text-indigo-700 py-3.5 rounded-xl text-base font-black shadow-lg hover:bg-indigo-50 flex justify-center items-center gap-2 active:scale-95 transition-transform">
+                                <i data-lucide="refresh-cw" class="w-5 h-5"></i> 立即執行雙向同步
+                            </button>
+                        </div>
+                        
+                        <div class="border-t border-indigo-400/50 pt-4 flex justify-between items-center">
+                            <span class="text-xs text-indigo-200">需要離線實體檔案？</span>
+                            <button onclick="downloadCSV()" class="text-xs bg-indigo-900/60 px-3 py-1.5 rounded-lg border border-indigo-400 hover:bg-indigo-800 shadow-sm flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> 匯出 Excel (CSV)</button>
+                        </div>
+                    </div>
+
                     <!-- 專業記帳本 -->
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
@@ -447,56 +635,56 @@
                         </div>
                         
                         <!-- 新增表單 -->
-                        <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-4">
+                        <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 shadow-sm">
                             <div class="flex gap-2 mb-2">
-                                <select id="ex-day" class="w-1/3 p-2.5 border border-gray-300 rounded-lg text-sm bg-white font-bold text-gray-700">${dayOptions}</select>
-                                <select id="ex-cat" class="w-2/3 p-2.5 border border-gray-300 rounded-lg text-sm bg-white">${catOptions}</select>
+                                <select id="ex-day" class="w-1/3 p-2.5 border border-gray-300 rounded-lg text-sm bg-white font-bold text-gray-700 shadow-sm">${dayOptions}</select>
+                                <select id="ex-cat" class="w-2/3 p-2.5 border border-gray-300 rounded-lg text-sm bg-white shadow-sm">${catOptions}</select>
                             </div>
                             <input type="text" id="ex-desc" placeholder="輸入細項 (如: 章魚燒)" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm mb-2 shadow-inner">
                             <div class="flex gap-2">
                                 <div class="relative flex-1">
                                     <span class="absolute left-3 top-2.5 text-gray-400 font-bold">¥</span>
-                                    <input type="text" id="ex-formula" onkeyup="previewCalc()" placeholder="算式支援空格: 200 50 145" class="w-full pl-8 p-2.5 border border-gray-300 rounded-lg text-sm font-mono shadow-inner">
+                                    <input type="text" id="ex-formula" onkeyup="previewCalc()" placeholder="算式支援空格: 200 50 145" class="w-full pl-8 p-2.5 border border-gray-300 rounded-lg text-sm font-mono shadow-inner bg-white">
                                     <span id="ex-preview" class="absolute right-3 top-2.5 text-blue-600 font-bold text-sm"></span>
                                 </div>
-                                <button onclick="saveExpense()" class="bg-blue-600 text-white px-5 rounded-lg text-sm font-bold shadow hover:bg-blue-700">儲存</button>
+                                <button onclick="saveExpense()" class="bg-blue-600 text-white px-5 rounded-lg text-sm font-bold shadow-md hover:bg-blue-700">儲存</button>
                             </div>
-                            <div class="text-[10px] text-gray-400 mt-1.5 text-right">預估匯率: ${EXCHANGE_RATE} (自動轉台幣)</div>
+                            <div class="text-[10px] text-gray-400 mt-1.5 text-right">匯率: ${EXCHANGE_RATE} (自動算台幣)</div>
                         </div>
 
                         <!-- 統計與明細 Tab -->
-                        <div class="flex p-1 bg-gray-100 rounded-lg mb-3">
-                            <button onclick="document.getElementById('ex-list-view').classList.remove('hidden'); document.getElementById('ex-stat-view').classList.add('hidden');" class="flex-1 py-1.5 text-xs font-bold rounded-md bg-white shadow text-gray-800">所有明細</button>
-                            <button onclick="document.getElementById('ex-list-view').classList.add('hidden'); document.getElementById('ex-stat-view').classList.remove('hidden');" class="flex-1 py-1.5 text-xs font-bold rounded-md text-gray-500">分類統計</button>
+                        <div class="flex p-1 bg-gray-100 rounded-xl mb-3 shadow-inner">
+                            <button onclick="document.getElementById('ex-list-view').classList.remove('hidden'); document.getElementById('ex-stat-view').classList.add('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-gray-800">所有明細</button>
+                            <button onclick="document.getElementById('ex-list-view').classList.add('hidden'); document.getElementById('ex-stat-view').classList.remove('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700">分類統計圖</button>
                         </div>
 
-                        <div id="ex-list-view" class="max-h-64 overflow-y-auto border border-gray-100 rounded-xl">${expenseList}</div>
-                        <div id="ex-stat-view" class="hidden p-4 bg-gray-50 rounded-xl border border-gray-100">
+                        <div id="ex-list-view" class="max-h-72 overflow-y-auto border border-gray-100 rounded-xl">${expenseList}</div>
+                        <div id="ex-stat-view" class="hidden p-5 bg-white rounded-xl border border-gray-100 shadow-sm">
                             ${chartHtml}
                             ${statsHtml}
                         </div>
                     </div>
 
-                    <!-- 資料備份與同步中心 -->
-                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-5 rounded-2xl shadow-md text-white">
-                        <h3 class="text-base font-bold mb-2 flex items-center gap-2"><i data-lucide="database" class="w-5 h-5"></i> 備份與雲端同步</h3>
-                        <div class="grid grid-cols-2 gap-2 mb-3 mt-3">
-                            <button onclick="showExportModal()" class="bg-white text-indigo-700 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-indigo-50 flex justify-center items-center gap-1">1. 複製同步碼</button>
-                            <button onclick="showImportModal()" class="bg-indigo-800 text-white border border-indigo-400 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-indigo-700 flex justify-center items-center gap-1">2. 貼上同步碼</button>
+                    <!-- USJ 身高 -->
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="baby" class="w-6 h-6"></i></div>
+                            <h3 class="text-lg font-bold text-gray-800">USJ 設施快篩</h3>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="downloadCSV()" class="bg-indigo-900/50 py-2.5 rounded-lg text-xs border border-indigo-400 hover:bg-indigo-800 flex justify-center items-center gap-1"><i data-lucide="file-spreadsheet" class="w-3 h-3"></i> 匯出 Excel</button>
-                            <button onclick="downloadJSON()" class="bg-indigo-900/50 py-2.5 rounded-lg text-xs border border-indigo-400 hover:bg-indigo-800 flex justify-center items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> 下載完整備份</button>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">小朋友身高: <span class="text-blue-600 font-bold text-xl">${childHeight} cm</span></label>
+                            <input type="range" min="80" max="140" value="${childHeight}" oninput="updateHeight(this.value)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            <div class="flex justify-between text-xs text-gray-400 mt-1 font-mono"><span>80cm</span><span>100cm</span><span>115cm</span><span>140cm</span></div>
                         </div>
+                        <div class="grid grid-cols-1 gap-2">${rideHtml}</div>
                     </div>
                 </div>
             `;
         }
 
-        // 記帳運算邏輯 (加入空格轉換 +)
         function previewCalc() {
             const input = document.getElementById('ex-formula').value;
-            const withPlus = input.replace(/\s+/g, '+'); // 空格轉換為加號
+            const withPlus = input.replace(/\s+/g, '+'); 
             const safeInput = withPlus.replace(/[^0-9+\-*/().]/g, '');
             try {
                 if(safeInput && !safeInput.endsWith('+') && !safeInput.endsWith('-')) {
@@ -527,101 +715,14 @@
                     time: new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'})
                 });
                 render();
+                backgroundSync();
             } catch(e) {
                 alert("算式錯誤，請檢查輸入！");
             }
         }
 
-        function deleteExpense(id) { appState.expenses = appState.expenses.filter(e => e.id !== id); render(); }
-
-        // Modal 與 同步邏輯
-        function showModal(title, desc, textAreaValue, showTextArea, buttonsHtml) {
-            document.getElementById('modal-title').innerText = title;
-            let bodyHtml = `<p class="text-sm text-gray-600 mb-4 leading-relaxed">${desc}</p>`;
-            if (showTextArea) {
-                bodyHtml += `<textarea id="modal-textarea" class="w-full h-32 p-3 border border-gray-300 rounded-xl text-xs font-mono shadow-inner mb-2" ${textAreaValue ? 'readonly' : 'placeholder="請在此貼上代碼..."'}>${textAreaValue}</textarea>`;
-            }
-            document.getElementById('modal-body').innerHTML = bodyHtml;
-            document.getElementById('modal-actions').innerHTML = buttonsHtml;
-            document.getElementById('modal-overlay').style.display = 'flex';
-            lucide.createIcons();
-        }
-        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-
-        function showExportModal() {
-            const dataStr = btoa(encodeURIComponent(JSON.stringify(appState)));
-            showModal(
-                "📤 複製同步碼",
-                "請點擊下方按鈕複製代碼，並用 LINE 傳給家人。家人在他們的 APP 選擇「貼上同步碼」即可。<br><br><span class='text-xs bg-red-50 text-red-600 p-2 rounded block'>⚠️ 警告：拿到此代碼的人可覆蓋您的資料。</span>",
-                dataStr, true,
-                `<button onclick="copyToClipboard()" id="copy-btn" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 shadow-lg"><i data-lucide="copy" class="w-5 h-5"></i> 點我一鍵複製</button>`
-            );
-        }
-
-        function copyToClipboard() {
-            const textarea = document.getElementById('modal-textarea');
-            textarea.select(); document.execCommand('copy');
-            const btn = document.getElementById('copy-btn');
-            btn.innerHTML = `<i data-lucide="check" class="w-5 h-5"></i> 複製成功！快去貼上`;
-            btn.classList.replace('bg-blue-600', 'bg-green-600');
-            lucide.createIcons();
-            setTimeout(() => closeModal(), 1500);
-        }
-
-        function showImportModal() {
-            showModal(
-                "📥 貼上同步碼",
-                "請將家人傳給您的代碼貼在下方。建議使用【智慧合併】，系統會自動略過重複的記帳與清單項目。",
-                "", true,
-                `<button onclick="processImport(false)" class="flex-1 bg-blue-600 text-white font-bold py-3 rounded-xl text-sm shadow">💡 智慧合併</button>
-                 <button onclick="processImport(true)" class="flex-1 bg-red-50 text-red-600 border border-red-200 font-bold py-3 rounded-xl text-sm">強制覆蓋</button>`
-            );
-        }
-
-        function processImport(overwrite) {
-            const code = document.getElementById('modal-textarea').value.trim();
-            if (!code) return alert("請先貼上代碼！");
-            try {
-                const inc = JSON.parse(decodeURIComponent(atob(code)));
-                if (!inc || typeof inc !== 'object') throw new Error();
-                if (overwrite) {
-                    if(confirm("確定覆蓋嗎？原本的資料會消失！")) { appState = inc; } else { return; }
-                } else {
-                    if (inc.expenses) {
-                        inc.expenses.forEach(iEx => {
-                            const exists = appState.expenses.some(mEx => mEx.desc === iEx.desc && mEx.amount === iEx.amount && mEx.time === iEx.time);
-                            if (!exists) appState.expenses.push(iEx);
-                        });
-                        appState.expenses.sort((a, b) => b.id - a.id);
-                    }
-                    if (inc.packing) {
-                        inc.packing.forEach(iPk => {
-                            const mPk = appState.packing.find(p => p.text === iPk.text);
-                            if (mPk) mPk.checked = mPk.checked || iPk.checked;
-                            else appState.packing.push(iPk);
-                        });
-                    }
-                    appState.completedSpots = { ...appState.completedSpots, ...(inc.completedSpots || {}) };
-                    appState.hiddenDays = { ...appState.hiddenDays, ...(inc.hiddenDays || {}) };
-                    if (inc.customSpots) {
-                         Object.keys(inc.customSpots).forEach(day => {
-                             if(!appState.customSpots[day]) appState.customSpots[day] = [];
-                             inc.customSpots[day].forEach(iSpot => {
-                                 const exists = appState.customSpots[day].some(mSpot => mSpot.text === iSpot.text);
-                                 if(!exists) appState.customSpots[day].push(iSpot);
-                             });
-                         });
-                    }
-                }
-                alert("🎉 同步成功！"); closeModal(); render();
-            } catch(e) { alert("❌ 同步碼無效！"); }
-        }
-
-        function downloadJSON() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
-            const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `大阪旅遊備份_${new Date().toISOString().slice(0,10)}.json`); dl.click();
-        }
-
+        function deleteExpense(id) { appState.expenses = appState.expenses.filter(e => e.id !== id); render(); backgroundSync(); }
+        
         function downloadCSV() {
             if(appState.expenses.length === 0) return alert("沒有資料可匯出！");
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF天數,分類,項目,日幣,台幣,時間\n";
@@ -633,10 +734,59 @@
             const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "大阪旅遊記帳.csv"); link.click();
         }
 
+        // --- 3. 日語學習 ---
+        function cyclePhrase() {
+            randomPhrase = DAILY_PHRASES[Math.floor(Math.random() * DAILY_PHRASES.length)];
+            const content = document.getElementById('app-content');
+            if (content && currentTab === 'learning') render();
+        }
+
+        function renderLearning(container) {
+            let categoriesHtml = LEARNING_DATA.map(cat => `
+                <div class="border-t border-gray-100 pt-4 first:border-0 first:pt-0">
+                    <h4 class="text-md font-bold mb-3 px-2 py-1 rounded inline-block ${cat.color}">${cat.cat}</h4>
+                    <div class="grid grid-cols-2 gap-3 mb-4">
+                        ${cat.words.map(w => `
+                            <div onclick="speak('${w.jp}')" class="bg-gray-50 p-4 rounded-xl border border-gray-100 text-center active:scale-95 transition-transform cursor-pointer relative shadow-sm hover:bg-gray-100">
+                                <div class="absolute top-2 right-2 text-gray-300"><i data-lucide="volume-2" class="w-4 h-4"></i></div>
+                                <div class="text-xl font-bold text-gray-800 mb-1">${w.jp}</div>
+                                <div class="text-sm text-gray-500 font-medium">${w.ch}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `
+                <div class="space-y-6 fade-in pt-2">
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-500 p-6 rounded-2xl shadow-md text-white text-center relative">
+                        <div class="flex justify-center items-center gap-2 mb-4">
+                            <i data-lucide="star" class="text-yellow-300 fill-current w-6 h-6"></i>
+                            <h3 class="text-lg font-bold tracking-wide">每日一句挑戰</h3>
+                        </div>
+                        <div class="text-3xl font-bold mb-2 cursor-pointer active:scale-95 transition-transform flex justify-center items-center gap-2" onclick="speak('${randomPhrase.jp}')">
+                            ${randomPhrase.jp} <i data-lucide="volume-2" class="w-6 h-6 opacity-80"></i>
+                        </div>
+                        <div class="text-sm font-medium text-pink-100 mb-2 font-mono">${randomPhrase.romaji}</div>
+                        <div class="text-xl font-bold mb-6">${randomPhrase.ch}</div>
+                        
+                        <button onclick="cyclePhrase()" class="bg-white text-pink-600 font-bold py-3 px-8 rounded-full shadow-md hover:bg-pink-50 transition-colors mx-auto flex items-center gap-2 text-lg active:scale-95">
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i> 換一句 (Next)
+                        </button>
+                    </div>
+                    
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
+                        <div class="mb-4 text-sm text-gray-500 text-center flex items-center justify-center gap-1"><i data-lucide="info" class="w-4 h-4"></i> 點擊卡片聽發音</div>
+                        ${categoriesHtml}
+                    </div>
+                </div>
+            `;
+        }
+
         // --- 4. 行前清單 ---
         function renderPacking(container) {
             const listHtml = appState.packing.map(item => `
-                <li class="flex items-center justify-between p-3.5 border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                <li class="flex items-center justify-between p-3.5 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
                     <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="togglePacking(${item.id})">
                         <input type="checkbox" ${item.checked ? 'checked' : ''} class="w-6 h-6 accent-blue-600 pointer-events-none rounded">
                         <span class="text-base flex-1 ${item.checked ? 'text-gray-400 line-through' : 'text-gray-800 font-medium'}">${item.text}</span>
@@ -654,7 +804,7 @@
                         </div>
                         <div class="flex gap-2 mb-6">
                             <input type="text" id="new-pack-item" placeholder="輸入物品..." class="flex-1 p-3 border border-gray-300 rounded-xl text-base shadow-inner">
-                            <button onclick="addPacking()" class="bg-blue-600 text-white px-5 py-3 rounded-xl text-base font-bold shadow hover:bg-blue-700">新增</button>
+                            <button onclick="addPacking()" class="bg-blue-600 text-white px-5 py-3 rounded-xl text-base font-bold shadow hover:bg-blue-700 transition-colors">新增</button>
                         </div>
                         <ul class="space-y-1">
                             ${listHtml}
@@ -664,11 +814,11 @@
             `;
         }
 
-        function togglePacking(id) { const item = appState.packing.find(p => p.id === id); if (item) item.checked = !item.checked; render(); }
-        function addPacking() { const input = document.getElementById('new-pack-item'); if(!input.value.trim()) return; appState.packing.push({ id: Date.now(), text: input.value.trim(), checked: false }); render(); }
-        function deletePacking(id) { appState.packing = appState.packing.filter(p => p.id !== id); render(); }
+        function togglePacking(id) { const item = appState.packing.find(p => p.id === id); if (item) item.checked = !item.checked; render(); backgroundSync(); }
+        function addPacking() { const input = document.getElementById('new-pack-item'); if(!input.value.trim()) return; appState.packing.push({ id: Date.now(), text: input.value.trim(), checked: false }); render(); backgroundSync(); }
+        function deletePacking(id) { appState.packing = appState.packing.filter(p => p.id !== id); render(); backgroundSync(); }
 
-        // --- 5. SOS 緊急救援 (卡片展開階層) ---
+        // --- 5. SOS 緊急救援 ---
         const SOS_PHRASES = [
             {
                 id: 1, ch: "請幫幫我！", jp: "たすけてください！", romaji: "Tasukete kudasai!", en: "Help me!",
