@@ -5,42 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>大阪親子7日遊</title>
     
-    <!-- iOS Web App 設定 (讓網頁變身 APP 的關鍵) -->
+    <!-- iOS Web App 設定 -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="大阪旅遊">
-    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/7893/7893979.png"> <!-- 範例飛機圖示 -->
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/7893/7893979.png">
 
     <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- 引入 Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* 針對 iOS 的優化 */
         body { 
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #f9fafb; 
-            padding-bottom: 90px; /* 增加底部空間給 iPhone 的 Home Bar */
-            -webkit-tap-highlight-color: transparent; /* 移除點擊高亮 */
+            padding-bottom: 90px;
+            -webkit-tap-highlight-color: transparent;
         }
-        .tab-active { color: #2563eb; }
-        .tab-inactive { color: #9ca3af; }
         .fade-in { animation: fadeIn 0.3s ease-in-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        .pt-safe { padding-top: env(safe-area-inset-top); }
         
         /* 隱藏捲軸但保持滾動 */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* 針對 iPhone 安全區域的調整 */
-        .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
     </style>
 </head>
 <body>
 
     <!-- 頂部標題 -->
     <header class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-50 pt-safe">
-        <div class="max-w-md mx-auto flex justify-between items-center pt-2"> <!-- 增加 pt-2 避開狀態列 -->
+        <div class="max-w-md mx-auto flex justify-between items-center pt-2">
             <div>
                 <h1 class="text-xl font-bold">大阪親子 7 日遊</h1>
                 <p class="text-xs text-blue-200">2026/04/18 - 04/24 • 2大2小</p>
@@ -58,7 +54,7 @@
 
     <!-- 底部導航列 -->
     <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-50 pb-safe">
-        <div class="max-w-md mx-auto flex justify-around items-center h-16 pb-1"> <!-- 增加 pb-1 微調位置 -->
+        <div class="max-w-md mx-auto flex justify-around items-center h-16 pb-1">
             <button onclick="switchTab('itinerary')" class="nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400" id="btn-itinerary">
                 <i data-lucide="home" class="w-6 h-6"></i>
                 <span class="text-[10px] font-medium">行程</span>
@@ -79,59 +75,62 @@
     </nav>
 
     <script>
-        // --- 資料庫 ---
+        // --- 核心行程資料庫 (專屬為您規劃) ---
         const ITINERARY_DATA = [
             {
-                day: 1, date: "4/18 (六)", title: "抵達神戶與移動至大阪", intensity: 5, location: "Kobe Airport", displayLoc: "神戶機場 -> 大阪市區",
-                desc: "10:30 抵達神戶機場 (UKB)。搭乘 Port Liner 至三宮站，轉車前往大阪(難波/梅田)。Check-in 後採買零食。",
-                meals: { b: "機上", l: "神戶三宮/大阪市區", d: "鳥貴族 (全熟食)" },
-                spots: ["神戶機場 (UKB)", "移動至大阪", "便利商店"]
+                day: 1, date: "4/18 (六)", title: "抵達神戶 ➡️ 道頓堀", intensity: 5, location: "Dotonbori", displayLoc: "神戶機場 -> 大阪市區",
+                desc: "10:30 抵達神戶機場 (UKB)，搭乘 Port Liner 轉車前往大阪市區 Check-in。晚上前往道頓堀感受大阪熱鬧氣氛。",
+                meals: { b: "機上", l: "市區簡餐", d: "道頓堀/心齋橋商圈" },
+                baseSpots: ["神戶機場 (UKB)", "飯店 Check-in", "道頓堀/心齋橋", "跑跑人看板"]
             },
             {
-                day: 2, date: "4/19 (日)", title: "奈良：小鹿與大佛", intensity: 7, location: "Nara Park", displayLoc: "奈良公園",
-                desc: "戶外走動為主。避開兇猛大鹿，前往東大寺與小鹿互動。",
-                meals: { b: "便利商店", l: "志津香釜飯", d: "市區簡餐" },
-                spots: ["近鐵奈良站", "奈良公園", "東大寺"]
+                day: 2, date: "4/19 (日)", title: "天王寺動物園 ➡️ 新世界", intensity: 6, location: "Tennoji Zoo", displayLoc: "天王寺 / 阿倍野",
+                desc: "輕鬆看動物，出園直接去新世界吃炸串，傍晚看通天閣或阿倍野夜景。",
+                meals: { b: "飯店/超商", l: "新世界串炸 (無辣全熟)", d: "阿倍野周邊" },
+                baseSpots: ["天王寺動物園", "新世界老街", "通天閣", "阿倍野 HARUKAS"]
             },
             {
-                day: 3, date: "4/20 (一)", title: "🔥 環球影城 USJ", intensity: 10, location: "Universal Studios Japan", displayLoc: "USJ 環球影城",
-                desc: "全日戰鬥行程。超級任天堂世界主場，早出晚歸。",
-                meals: { b: "飯糰", l: "園區輕食", d: "便利商店炸雞" },
-                spots: ["任天堂世界", "小小兵樂園", "環球奇境"]
+                day: 3, date: "4/20 (一)", title: "京都清水寺 ➡️ 老街", intensity: 7, location: "Kiyomizu-dera", displayLoc: "京都清水寺",
+                desc: "唯一跨縣市移動。清水寺及周邊老街漫步，體驗傳統日本風情。",
+                meals: { b: "超商", l: "京都湯豆腐/烏龍麵", d: "大阪市區迴轉壽司" },
+                baseSpots: ["清水寺", "二年坂 / 三年坂", "八坂神社"]
             },
             {
-                day: 4, date: "4/21 (二)", title: "京都鐵道博物館 (緩衝)", intensity: 3, location: "Kyoto Railway Museum", displayLoc: "京都梅小路",
-                desc: "體力恢復日。室內為主，多座位。",
-                meals: { b: "飯店", l: "火車便當", d: "拉麵小路 (不辣)" },
-                spots: ["京都鐵道博物館", "京都車站"]
+                day: 4, date: "4/21 (二)", title: "🔥 環球影城 USJ", intensity: 10, location: "Universal Studios Japan", displayLoc: "USJ 環球影城",
+                desc: "避開週一！全日戰鬥行程。超級任天堂世界主場，早出晚歸。",
+                meals: { b: "便利商店飯糰", l: "園區輕食", d: "超商炸雞/便當" },
+                baseSpots: ["超級任天堂世界", "小小兵樂園", "環球奇境"]
             },
             {
-                day: 5, date: "4/22 (三)", title: "海遊館 + 樂高樂園", intensity: 8, location: "Osaka Aquarium Kaiyukan", displayLoc: "大阪港海遊館",
-                desc: "港灣區全日遊。樂高樂園小孩最愛。",
-                meals: { b: "便利商店", l: "天保山大阪燒", d: "便利商店" },
-                spots: ["海遊館", "大阪樂高樂園", "摩天輪"]
+                day: 5, date: "4/22 (三)", title: "任天堂官方店 ➡️ 梅田", intensity: 4, location: "Daimaru Umeda", displayLoc: "大阪梅田商圈",
+                desc: "USJ 隔日體力恢復。主攻大丸梅田 13F 的任天堂與寶可夢中心。",
+                meals: { b: "飯店", l: "大丸百貨美食街", d: "梅田周邊燒肉/壽喜燒" },
+                baseSpots: ["Nintendo OSAKA", "寶可夢中心", "梅田商圈購物"]
             },
             {
-                day: 6, date: "4/23 (四)", title: "京都經典散策", intensity: 6, location: "Kiyomizu-dera", displayLoc: "京都清水寺",
-                desc: "感受傳統日本。伏見稻荷只走前段，清水寺慢慢逛。",
-                meals: { b: "飯店", l: "湯豆腐/親子丼", d: "迴轉壽司 (熟食)" },
-                spots: ["伏見稻荷", "清水寺", "二年坂"]
+                day: 6, date: "4/23 (四)", title: "海遊館 ➡️ 天保山", intensity: 6, location: "Osaka Aquarium Kaiyukan", displayLoc: "大阪港灣區",
+                desc: "港灣區看鯨鯊。下坡好走，下午搭摩天輪。",
+                meals: { b: "超商", l: "天保山大阪燒", d: "市區簡餐" },
+                baseSpots: ["海遊館 (鯨鯊)", "天保山摩天輪", "聖瑪麗亞號"]
             },
             {
-                day: 7, date: "4/24 (五)", title: "Kids Plaza & 返台", intensity: 6, location: "Rinku Premium Outlets", displayLoc: "臨空城 -> 機場",
-                desc: "上午 Kids Plaza 放電，下午臨空城 Outlet 最後採購。20:55 班機返台。",
-                meals: { b: "退房", l: "扇町簡餐", d: "機場/Outlet" },
-                spots: ["Kids Plaza", "臨空城 Outlet", "關西機場"]
+                day: 7, date: "4/24 (五)", title: "最後採買 ➡️ 返台", intensity: 5, location: "Rinku Premium Outlets", displayLoc: "市區 / 關西機場",
+                desc: "最後藥妝補貨或臨空城 Outlet。準備搭乘 20:55 班機返台。",
+                meals: { b: "退房", l: "市區/Outlet 美食", d: "關西機場" },
+                baseSpots: ["市區最後採買", "臨空城 Outlet", "關西機場 (18:00前抵達)"]
             }
         ];
 
+        // --- 所有語言與工具常數維持不變 ---
         const DAILY_PHRASES = [
             { ch: "請給我這個！", jp: "これください！", romaji: "Kore kudasai!" },
             { ch: "謝謝！", jp: "ありがとうございます！", romaji: "A-ri-ga-tou go-zai-ma-su!" },
             { ch: "廁所在哪裡？", jp: "トイレはどこですか？", romaji: "Toire wa doko desu ka?" },
             { ch: "好好吃！", jp: "おいしいです！", romaji: "Oishii desu!" },
             { ch: "太可愛了！", jp: "かわいいです！", romaji: "Kawaii desu!" },
-            { ch: "不好意思...", jp: "すみません...", romaji: "Sumimasen..." }
+            { ch: "不好意思...", jp: "すみません...", romaji: "Sumimasen..." },
+            { ch: "有Wi-Fi嗎？", jp: "Wi-Fi ありますか？", romaji: "Wi-Fi arimasu ka?" },
+            { ch: "請幫幫我", jp: "たすけてください", romaji: "Tasukete kudasai" }
         ];
 
         const LEARNING_DATA = [
@@ -139,11 +138,6 @@
                 id: 'basic', cat: "基本禮貌", color: "bg-green-100 text-green-700",
                 words: [{jp:"こんにちは", ch:"你好"}, {jp:"ありがとう", ch:"謝謝"}, {jp:"ごめんなさい", ch:"對不起"}, {jp:"トイレ", ch:"廁所"}],
                 phrase: {jp:"トイレはどこですか？", ch:"請問廁所在哪裡？", r:"Toire wa doko desu ka?"}
-            },
-            {
-                id: 'hotel', cat: "飯店住宿", color: "bg-indigo-100 text-indigo-700",
-                words: [{jp:"へや", ch:"房間"}, {jp:"かぎ", ch:"鑰匙"}, {jp:"タオル", ch:"毛巾"}, {jp:"Wi-Fi", ch:"Wi-Fi"}],
-                phrase: {jp:"チェックインおねがいします", ch:"我要辦理入住", r:"Check-in onegai shimasu"}
             },
             {
                 id: 'shopping', cat: "逛街購物", color: "bg-purple-100 text-purple-700",
@@ -171,29 +165,43 @@
             { name: "小小兵冰凍雷射光", h: 92, area: "小小兵", type: "溫和", switch: false }
         ];
 
-        // --- 狀態變數 ---
+        // --- APP 狀態中心 (完全儲存於記憶體，透過同步碼轉移) ---
+        let appState = {
+            expenses: [],
+            packing: [
+                { id: 1, text: "下載 USJ 官方 APP", checked: true },
+                { id: 2, text: "準備 100 圓硬幣", checked: true },
+                { id: 3, text: "確認漫遊網卡/WiFi機", checked: false },
+                { id: 4, text: "護照 (有效期6個月以上)", checked: false },
+                { id: 5, text: "兒童輕便雨衣", checked: false },
+                { id: 6, text: "常用藥品 (退燒/腸胃)", checked: false }
+            ],
+            customSpots: {},     // 格式: { "1": [{id: 123, text:"新增景點"}], "2": [] }
+            completedSpots: {},  // 格式: { "1-神戶機場": true }
+            hiddenDays: {}       // 格式: { "1": true }
+        };
+
         let currentTab = 'itinerary';
-        let expandedDay = 3; // 預設打開 Day 3
+        let expandedDay = 4; // 預設打開 Day 4 (USJ)
         let childHeight = 100;
-        let expenses = JSON.parse(localStorage.getItem('osaka_expenses')) || [];
+        let randomPhrase = DAILY_PHRASES[0];
 
         // --- 初始化 ---
         document.addEventListener('DOMContentLoaded', () => {
+            cyclePhrase();
             render();
-            lucide.createIcons();
         });
 
         // --- 核心渲染函數 ---
         function render() {
             const content = document.getElementById('app-content');
             
-            // 更新按鈕樣式
+            // 更新導航列狀態
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 const isActive = btn.id === `btn-${currentTab}`;
                 btn.className = `nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400'}`;
             });
 
-            // 渲染內容
             if (currentTab === 'itinerary') renderItinerary(content);
             else if (currentTab === 'tools') renderTools(content);
             else if (currentTab === 'learning') renderLearning(content);
@@ -207,25 +215,60 @@
             render();
         }
 
-        // --- 行程表渲染 ---
+        // --- 1. 行程表功能 ---
         function renderItinerary(container) {
-            let html = `
-                <div class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-xl p-4 text-white shadow-md mb-6 fade-in">
-                    <h2 class="font-bold text-lg mb-2">行程重點</h2>
-                    <ul class="text-sm space-y-1 text-purple-100">
-                        <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> USJ 與海遊館錯開安排</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> 兩日全日活動晚餐便利商店</li>
-                        <li class="flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i> 排除生食/辣味</li>
-                    </ul>
-                </div>
-                <div class="space-y-4 fade-in">
-            `;
+            let html = `<div class="space-y-4 fade-in pt-2">`;
 
             ITINERARY_DATA.forEach(day => {
-                const isExpanded = expandedDay === day.day;
+                const isHidden = appState.hiddenDays[day.day];
+                const isExpanded = expandedDay === day.day && !isHidden;
+                
+                // 如果被隱藏，只顯示窄版小卡片
+                if (isHidden) {
+                    html += `
+                        <div class="bg-gray-100 rounded-xl p-3 flex justify-between items-center opacity-70 border border-gray-200">
+                            <span class="text-sm font-bold text-gray-500">Day ${day.day} - 已隱藏</span>
+                            <button onclick="toggleHideDay(${day.day})" class="text-xs text-blue-600 border border-blue-600 px-2 py-1 rounded">顯示行程</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // 正常顯示
                 const intensityColor = day.intensity >= 8 ? "bg-red-100 text-red-800" : (day.intensity >= 5 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800");
                 const intensityLabel = day.intensity >= 8 ? "高強度" : (day.intensity >= 5 ? "中等" : "輕鬆");
                 
+                // 組合基礎景點與自訂景點
+                const custom = appState.customSpots[day.day] || [];
+                let spotsHtml = '';
+                
+                // 渲染基礎景點
+                day.baseSpots.forEach(s => {
+                    const spotKey = `${day.day}-${s}`;
+                    const isCompleted = appState.completedSpots[spotKey];
+                    spotsHtml += `
+                        <div class="flex items-center gap-2 mb-2 p-2 bg-blue-50 rounded-lg border border-blue-100">
+                            <input type="checkbox" onchange="toggleCompleteSpot('${spotKey}')" ${isCompleted ? 'checked' : ''} class="w-5 h-5 accent-blue-600">
+                            <span class="text-sm ${isCompleted ? 'line-through text-gray-400' : 'text-blue-800 font-medium'}">${s}</span>
+                        </div>
+                    `;
+                });
+                
+                // 渲染自訂景點
+                custom.forEach(cs => {
+                    const spotKey = `custom-${cs.id}`;
+                    const isCompleted = appState.completedSpots[spotKey];
+                    spotsHtml += `
+                        <div class="flex items-center justify-between gap-2 mb-2 p-2 bg-purple-50 rounded-lg border border-purple-100">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" onchange="toggleCompleteSpot('${spotKey}')" ${isCompleted ? 'checked' : ''} class="w-5 h-5 accent-purple-600">
+                                <span class="text-sm ${isCompleted ? 'line-through text-gray-400' : 'text-purple-800 font-medium'}">${cs.text}</span>
+                            </div>
+                            <button onclick="deleteCustomSpot(${day.day}, ${cs.id})" class="text-red-400 hover:text-red-600 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    `;
+                });
+
                 html += `
                     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-500' : ''}">
                         <div class="p-4 flex items-center justify-between cursor-pointer" onclick="toggleDay(${day.day})">
@@ -244,33 +287,29 @@
                         
                         ${isExpanded ? `
                         <div class="p-4 pt-0 border-t border-gray-100 mt-2 bg-gray-50/50">
-                            <div class="py-3">
+                            <div class="flex justify-end mb-2">
+                                <button onclick="toggleHideDay(${day.day})" class="text-xs text-gray-400 hover:text-gray-600 flex items-center gap-1 bg-white border border-gray-200 px-2 py-1 rounded"><i data-lucide="eye-off" class="w-3 h-3"></i> 隱藏此日</button>
+                            </div>
+                            <div class="py-2 mb-2 border-b border-gray-200">
                                 <p class="text-gray-600 text-sm leading-relaxed mb-2">${day.desc}</p>
-                                <div class="flex items-center gap-1 text-xs text-gray-500">
-                                    <i data-lucide="map-pin" class="w-3 h-3"></i> 區域: ${day.displayLoc}
-                                </div>
                             </div>
                             
                             <div class="mb-4">
-                                <div class="flex flex-wrap gap-2">
-                                    ${day.spots.map(s => `<span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-md border border-blue-100">${s}</span>`).join('')}
+                                <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase">行程地標 (可打勾完成)</h4>
+                                ${spotsHtml}
+                                <div class="flex gap-2 mt-2">
+                                    <input type="text" id="add-spot-${day.day}" placeholder="臨時加行程..." class="flex-1 border p-2 text-sm rounded bg-white">
+                                    <button onclick="addCustomSpot(${day.day})" class="bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold whitespace-nowrap shadow-sm">新增</button>
                                 </div>
                             </div>
 
                             <div class="bg-orange-50 p-3 rounded-lg border border-orange-100 mb-3">
-                                <h4 class="text-xs font-bold text-orange-800 mb-2 flex items-center gap-1"><i data-lucide="utensils" class="w-3 h-3"></i> 餐食</h4>
+                                <h4 class="text-xs font-bold text-orange-800 mb-2 flex items-center gap-1"><i data-lucide="utensils" class="w-3 h-3"></i> 餐食規劃</h4>
                                 <div class="grid grid-cols-1 gap-1 text-sm text-gray-700">
                                     <div><span class="text-orange-400 font-bold">早:</span> ${day.meals.b}</div>
                                     <div><span class="text-orange-400 font-bold">午:</span> ${day.meals.l}</div>
                                     <div><span class="text-orange-400 font-bold">晚:</span> ${day.meals.d}</div>
                                 </div>
-                            </div>
-
-                            <div class="rounded-lg overflow-hidden border border-gray-200 shadow-inner relative h-48 bg-gray-200">
-                                <a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(day.location)}" target="_blank" class="absolute top-2 right-2 bg-white/90 px-3 py-1 rounded-full text-xs font-bold text-blue-600 shadow-sm z-10 flex items-center gap-1">
-                                    <i data-lucide="external-link" class="w-3 h-3"></i> 開啟地圖
-                                </a>
-                                <iframe width="100%" height="100%" frameborder="0" style="border:0" src="https://maps.google.com/maps?q=${encodeURIComponent(day.location)}&t=&z=14&ie=UTF8&iwloc=&output=embed"></iframe>
                             </div>
                         </div>` : ''}
                     </div>
@@ -281,13 +320,30 @@
             container.innerHTML = html;
         }
 
-        function toggleDay(day) {
-            expandedDay = expandedDay === day ? null : day;
+        function toggleDay(day) { expandedDay = expandedDay === day ? null : day; render(); }
+        function toggleHideDay(day) { appState.hiddenDays[day] = !appState.hiddenDays[day]; render(); }
+        
+        function toggleCompleteSpot(key) {
+            appState.completedSpots[key] = !appState.completedSpots[key];
             render();
         }
 
-        // --- 工具頁渲染 ---
+        function addCustomSpot(day) {
+            const input = document.getElementById(`add-spot-${day}`);
+            if (!input.value.trim()) return;
+            if (!appState.customSpots[day]) appState.customSpots[day] = [];
+            appState.customSpots[day].push({ id: Date.now(), text: input.value.trim() });
+            render();
+        }
+
+        function deleteCustomSpot(day, id) {
+            appState.customSpots[day] = appState.customSpots[day].filter(s => s.id !== id);
+            render();
+        }
+
+        // --- 2. 工具頁 (記帳與雲端備份替代方案) ---
         function renderTools(container) {
+            // USJ 身高快篩
             let rideHtml = '';
             USJ_RIDES.forEach(ride => {
                 const ok = childHeight >= ride.h;
@@ -296,153 +352,222 @@
                         <div>
                             <div class="font-bold text-gray-800 text-sm">${ride.name}</div>
                             <div class="text-xs text-gray-500">${ride.area} | ${ride.type}</div>
-                            ${!ok && ride.switch ? '<span class="text-[10px] text-orange-600 font-bold block">💡 可用 Child Switch</span>' : ''}
+                            ${!ok && ride.switch ? '<span class="text-[10px] text-orange-600 font-bold block mt-1">💡 可用 Child Switch (輪流乘坐)</span>' : ''}
                         </div>
                         <div class="ml-2">
-                            ${ok ? '<i data-lucide="check-circle" class="text-green-600 w-5 h-5"></i>' : `<div class="text-center"><i data-lucide="x-circle" class="text-red-500 w-5 h-5 mx-auto"></i><span class="text-[10px] text-red-500 font-bold">${ride.h}cm+</span></div>`}
+                            ${ok ? '<i data-lucide="check-circle" class="text-green-600 w-6 h-6"></i>' : `<div class="text-center"><i data-lucide="x-circle" class="text-red-500 w-5 h-5 mx-auto"></i><span class="text-[10px] text-red-500 font-bold block mt-1">${ride.h}cm+</span></div>`}
                         </div>
                     </div>
                 `;
             });
 
             // 記帳列表
-            const total = expenses.reduce((sum, item) => sum + item.amount, 0);
-            const expenseList = expenses.length === 0 ? '<p class="text-center text-gray-400 text-xs py-4">尚未有記錄</p>' : expenses.map(item => `
-                <div class="flex justify-between items-center p-2 border-b border-gray-100 last:border-0">
+            const total = appState.expenses.reduce((sum, item) => sum + item.amount, 0);
+            const expenseList = appState.expenses.length === 0 ? '<p class="text-center text-gray-400 text-xs py-4">尚未有記錄</p>' : appState.expenses.map(item => `
+                <div class="flex justify-between items-center p-3 border-b border-gray-100 last:border-0">
                     <div class="flex flex-col">
                         <span class="text-sm font-medium text-gray-700">${item.desc}</span>
-                        <span class="text-xs text-gray-400">${item.time}</span>
+                        <span class="text-xs text-gray-400 mt-1">${item.time}</span>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <span class="font-bold text-gray-800">¥ ${item.amount.toLocaleString()}</span>
-                        <button onclick="deleteExpense(${item.id})" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    <div class="flex items-center gap-4">
+                        <span class="font-bold text-gray-800 text-lg">¥ ${item.amount.toLocaleString()}</span>
+                        <button onclick="deleteExpense(${item.id})" class="text-red-300 hover:text-red-500 p-2 bg-red-50 rounded-full"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             `).join('');
 
             container.innerHTML = `
-                <div class="space-y-6 fade-in">
-                    <!-- USJ 身高檢測 -->
+                <div class="space-y-6 fade-in pt-2">
+                    <!-- 資料同步功能 (取代雲端伺服器) -->
+                    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-5 rounded-xl shadow-md text-white">
+                        <h3 class="text-lg font-bold mb-2 flex items-center gap-2"><i data-lucide="refresh-cw" class="w-5 h-5"></i> 跨手機資料同步</h3>
+                        <p class="text-xs text-indigo-100 mb-4 leading-relaxed">點擊產生同步碼，將代碼傳給另一支手機載入，即可同步所有行程、清單與記帳資料。</p>
+                        <div class="flex gap-2">
+                            <button onclick="exportData()" class="flex-1 bg-white text-indigo-600 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:bg-indigo-50 transition-colors">1. 產生同步碼</button>
+                            <button onclick="importData()" class="flex-1 bg-indigo-800 text-white border border-indigo-400 py-2.5 rounded-lg text-sm font-bold shadow-sm hover:bg-indigo-700 transition-colors">2. 載入同步碼</button>
+                        </div>
+                    </div>
+
+                    <!-- 記帳本 -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                        <div class="flex justify-between items-center mb-4">
+                            <div class="flex items-center gap-2">
+                                <div class="p-2 bg-yellow-100 rounded-lg text-yellow-600"><i data-lucide="dollar-sign" class="w-6 h-6"></i></div>
+                                <h3 class="text-lg font-bold text-gray-800">簡易記帳</h3>
+                            </div>
+                            <button onclick="downloadCSV()" class="text-xs text-blue-600 font-bold border border-blue-600 px-3 py-1.5 rounded-md hover:bg-blue-50 transition-colors flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> 下載 Excel (CSV)</button>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded-lg mb-4 flex gap-2">
+                            <input type="text" id="ex-desc" placeholder="輸入花費項目..." class="flex-1 p-2 border border-gray-300 rounded-md text-sm">
+                            <input type="number" id="ex-amount" placeholder="金額 ¥" class="w-24 p-2 border border-gray-300 rounded-md text-sm">
+                            <button onclick="addExpense()" class="bg-blue-600 text-white px-4 rounded-md font-bold shadow hover:bg-blue-700 transition-colors">新增</button>
+                        </div>
+                        <div class="text-right text-sm text-gray-600 mb-2 pb-2 border-b border-gray-100">總支出: <span class="text-2xl font-bold text-gray-800">¥ ${total.toLocaleString()}</span></div>
+                        <div class="max-h-60 overflow-y-auto">${expenseList}</div>
+                    </div>
+
+                    <!-- USJ 身高 -->
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                         <div class="flex items-center gap-2 mb-4">
                             <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="baby" class="w-6 h-6"></i></div>
                             <h3 class="text-lg font-bold text-gray-800">USJ 設施快篩</h3>
                         </div>
                         <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                身高: <span class="text-blue-600 font-bold text-xl">${childHeight} cm</span>
-                            </label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">小朋友身高: <span class="text-blue-600 font-bold text-xl">${childHeight} cm</span></label>
                             <input type="range" min="80" max="140" value="${childHeight}" oninput="updateHeight(this.value)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                             <div class="flex justify-between text-xs text-gray-400 mt-1"><span>80cm</span><span>100cm</span><span>115cm</span><span>140cm</span></div>
                         </div>
                         <div class="grid grid-cols-1 gap-2">${rideHtml}</div>
                     </div>
-
-                    <!-- 記帳本 -->
-                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <div class="flex items-center gap-2 mb-4">
-                            <div class="p-2 bg-yellow-100 rounded-lg text-yellow-600"><i data-lucide="dollar-sign" class="w-6 h-6"></i></div>
-                            <h3 class="text-lg font-bold text-gray-800">簡易記帳</h3>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg mb-4 flex gap-2">
-                            <input type="text" id="ex-desc" placeholder="項目" class="flex-1 p-2 border border-gray-300 rounded-md text-sm">
-                            <input type="number" id="ex-amount" placeholder="¥" class="w-20 p-2 border border-gray-300 rounded-md text-sm">
-                            <button onclick="addExpense()" class="bg-blue-600 text-white p-2 rounded-md"><i data-lucide="plus" class="w-5 h-5"></i></button>
-                        </div>
-                        <div class="text-right text-sm text-gray-600">總支出: <span class="text-2xl font-bold text-gray-800">¥ ${total.toLocaleString()}</span></div>
-                        <div class="max-h-60 overflow-y-auto mt-2">${expenseList}</div>
-                    </div>
                 </div>
             `;
         }
 
+        // 同步功能邏輯 (Base64 Encode/Decode)
+        function exportData() {
+            const dataStr = btoa(encodeURIComponent(JSON.stringify(appState)));
+            prompt("請複製這段「長長的同步碼」，並用 LINE 傳給家人：", dataStr);
+        }
+
+        function importData() {
+            const code = prompt("請貼上家人用 LINE 傳給您的「長長的同步碼」：");
+            if (!code) return;
+            try {
+                const parsed = JSON.parse(decodeURIComponent(atob(code)));
+                if (parsed && typeof parsed === 'object') {
+                    appState = parsed;
+                    alert("資料載入成功！您的行程與記帳已同步。");
+                    render();
+                }
+            } catch(e) {
+                alert("同步碼無效或格式錯誤！請確定複製完整。");
+            }
+        }
+
+        // 記帳邏輯
         function updateHeight(val) { childHeight = parseInt(val); render(); }
-        
         function addExpense() {
             const desc = document.getElementById('ex-desc').value;
             const amount = document.getElementById('ex-amount').value;
             if(!desc || !amount) return;
-            expenses.unshift({ id: Date.now(), desc, amount: parseInt(amount), time: new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}) });
-            localStorage.setItem('osaka_expenses', JSON.stringify(expenses));
+            appState.expenses.unshift({ id: Date.now(), desc, amount: parseInt(amount), time: new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}) });
             render();
         }
-
-        function deleteExpense(id) {
-            expenses = expenses.filter(e => e.id !== id);
-            localStorage.setItem('osaka_expenses', JSON.stringify(expenses));
-            render();
+        function deleteExpense(id) { appState.expenses = appState.expenses.filter(e => e.id !== id); render(); }
+        
+        function downloadCSV() {
+            if(appState.expenses.length === 0) return alert("沒有記帳資料可匯出！");
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF項目,金額(日幣),時間\n";
+            appState.expenses.forEach(e => { csvContent += `${e.desc},${e.amount},${e.time}\n`; });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "大阪旅遊記帳.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
 
-        // --- 日語學習渲染 ---
+        // --- 3. 日語學習 ---
+        function cyclePhrase() {
+            randomPhrase = DAILY_PHRASES[Math.floor(Math.random() * DAILY_PHRASES.length)];
+            const content = document.getElementById('app-content');
+            if (content && currentTab === 'learning') render();
+        }
+
         function renderLearning(container) {
-            const randomPhrase = DAILY_PHRASES[Math.floor(Math.random() * DAILY_PHRASES.length)];
-            
             let categoriesHtml = LEARNING_DATA.map(cat => `
                 <div class="border-t border-gray-100 pt-4 first:border-0 first:pt-0">
                     <h4 class="text-md font-bold mb-3 px-2 py-1 rounded inline-block ${cat.color}">${cat.cat}</h4>
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         ${cat.words.map(w => `
-                            <div onclick="speak('${w.jp}')" class="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center active:scale-95 transition-transform cursor-pointer relative group">
-                                <div class="absolute top-1 right-1 text-gray-300"><i data-lucide="volume-2" class="w-3 h-3"></i></div>
-                                <div class="text-xl font-bold text-gray-800">${w.jp}</div>
-                                <div class="text-sm text-gray-500">${w.ch}</div>
+                            <div onclick="speak('${w.jp}')" class="bg-gray-50 p-4 rounded-lg border border-gray-100 text-center active:scale-95 transition-transform cursor-pointer relative shadow-sm">
+                                <div class="absolute top-2 right-2 text-gray-300"><i data-lucide="volume-2" class="w-4 h-4"></i></div>
+                                <div class="text-xl font-bold text-gray-800 mb-1">${w.jp}</div>
+                                <div class="text-sm text-gray-500 font-medium">${w.ch}</div>
                             </div>
                         `).join('')}
-                    </div>
-                    <div onclick="speak('${cat.phrase.jp}')" class="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-start gap-3 cursor-pointer">
-                        <div class="p-2 bg-blue-100 rounded-full text-blue-600 mt-1"><i data-lucide="play-circle" class="w-4 h-4"></i></div>
-                        <div>
-                            <div class="text-xs font-bold text-blue-500">挑戰說一句：</div>
-                            <div class="text-lg font-bold text-gray-800">${cat.phrase.jp}</div>
-                            <div class="text-sm text-blue-700">${cat.phrase.r}</div>
-                            <div class="text-sm text-gray-500">${cat.phrase.ch}</div>
-                        </div>
                     </div>
                 </div>
             `).join('');
 
             container.innerHTML = `
-                <div class="space-y-6 fade-in">
+                <div class="space-y-6 fade-in pt-2">
                     <!-- 每日一句 -->
-                    <div class="bg-gradient-to-r from-pink-500 to-rose-500 p-4 rounded-xl shadow-md text-white text-center cursor-pointer" onclick="speak('${randomPhrase.jp}')">
-                        <div class="flex justify-center items-center gap-2 mb-2">
-                            <i data-lucide="star" class="text-yellow-300 fill-current w-5 h-5"></i>
-                            <h3 class="text-lg font-bold">每日一句挑戰 (點擊發音)</h3>
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-500 p-6 rounded-xl shadow-md text-white text-center relative">
+                        <div class="flex justify-center items-center gap-2 mb-4">
+                            <i data-lucide="star" class="text-yellow-300 fill-current w-6 h-6"></i>
+                            <h3 class="text-lg font-bold tracking-wide">每日一句挑戰</h3>
                         </div>
-                        <div class="text-3xl font-bold mb-1">${randomPhrase.jp}</div>
-                        <div class="text-sm font-medium text-pink-100 mb-1">${randomPhrase.romaji}</div>
-                        <div class="text-xl font-bold">${randomPhrase.ch}</div>
+                        <div class="text-3xl font-bold mb-2 cursor-pointer active:scale-95 transition-transform flex justify-center items-center gap-2" onclick="speak('${randomPhrase.jp}')">
+                            ${randomPhrase.jp} <i data-lucide="volume-2" class="w-6 h-6 opacity-80"></i>
+                        </div>
+                        <div class="text-sm font-medium text-pink-100 mb-2">${randomPhrase.romaji}</div>
+                        <div class="text-xl font-bold mb-6">${randomPhrase.ch}</div>
+                        
+                        <button onclick="cyclePhrase()" class="bg-white text-pink-600 font-bold py-3 px-8 rounded-full shadow hover:bg-pink-50 transition-colors mx-auto flex items-center gap-2 text-lg">
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i> 換一句 (Next)
+                        </button>
                     </div>
                     
-                    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+                        <div class="mb-4 text-sm text-gray-500 text-center flex items-center justify-center gap-1"><i data-lucide="info" class="w-4 h-4"></i> 點擊卡片可以聽發音喔！</div>
                         ${categoriesHtml}
                     </div>
                 </div>
             `;
         }
 
-        // --- 行前清單渲染 ---
+        // --- 4. 行前清單 (完全可編輯) ---
         function renderPacking(container) {
+            const listHtml = appState.packing.map(item => `
+                <li class="flex items-center justify-between p-3 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center gap-3">
+                        <input type="checkbox" onchange="togglePacking(${item.id})" ${item.checked ? 'checked' : ''} class="w-6 h-6 accent-blue-600 cursor-pointer">
+                        <span class="text-base ${item.checked ? 'text-gray-400 line-through' : 'text-gray-800 font-medium'}">${item.text}</span>
+                    </div>
+                    <button onclick="deletePacking(${item.id})" class="text-gray-300 hover:text-red-500 p-2"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </li>
+            `).join('');
+
             container.innerHTML = `
-                <div class="space-y-6 fade-in">
-                    <h2 class="text-lg font-bold text-gray-800 px-1">行前清單</h2>
+                <div class="space-y-6 fade-in pt-2">
                     <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                        <ul class="space-y-3">
-                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600" checked> 下載 USJ 官方 APP</li>
-                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600" checked> 準備 100 圓硬幣</li>
-                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600"> 確認漫遊/WiFi</li>
-                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600"> 兒童輕便雨衣</li>
-                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600"> 護照 (有效期6個月以上)</li>
-                            <li class="flex items-center gap-3 text-sm text-gray-700"><input type="checkbox" class="w-5 h-5 accent-blue-600"> 常用藥品 (退燒/腸胃)</li>
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="list-checks" class="w-6 h-6"></i></div>
+                            <h2 class="text-xl font-bold text-gray-800">行前準備清單</h2>
+                        </div>
+                        <div class="flex gap-2 mb-6">
+                            <input type="text" id="new-pack-item" placeholder="新增要帶的物品..." class="flex-1 p-3 border border-gray-300 rounded-lg text-base shadow-inner">
+                            <button onclick="addPacking()" class="bg-blue-600 text-white px-5 py-3 rounded-lg text-base font-bold shadow hover:bg-blue-700 transition-colors">新增</button>
+                        </div>
+                        <ul class="space-y-1">
+                            ${listHtml}
                         </ul>
                     </div>
                 </div>
             `;
         }
 
+        function togglePacking(id) {
+            const item = appState.packing.find(p => p.id === id);
+            if (item) item.checked = !item.checked;
+            render();
+        }
+        function addPacking() {
+            const input = document.getElementById('new-pack-item');
+            if(!input.value.trim()) return;
+            appState.packing.push({ id: Date.now(), text: input.value.trim(), checked: false });
+            render();
+        }
+        function deletePacking(id) {
+            appState.packing = appState.packing.filter(p => p.id !== id);
+            render();
+        }
+
         // --- TTS 語音 ---
         function speak(text) {
-            if (!window.speechSynthesis) { alert("瀏覽器不支援語音"); return; }
+            if (!window.speechSynthesis) return alert("瀏覽器不支援語音");
             window.speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(text);
             u.lang = 'ja-JP'; u.rate = 0.9;
