@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>大阪親子7日遊04061</title>
+    <title>大阪親子7日遊</title>
     
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -177,6 +177,50 @@
             { id: 'other', icon: '📦', label: '其他', color: '#9ca3af' }
         ];
 
+        // --- 補回遺失的資料庫 ---
+        const DAILY_PHRASES = [
+            { ch: "請給我這個！", jp: "これください！", romaji: "Kore kudasai!" },
+            { ch: "謝謝！", jp: "ありがとうございます！", romaji: "A-ri-ga-tou go-zai-ma-su!" },
+            { ch: "廁所在哪裡？", jp: "トイレはどこですか？", romaji: "Toire wa doko desu ka?" },
+            { ch: "好好吃！", jp: "おいしいです！", romaji: "Oishii desu!" },
+            { ch: "太可愛了！", jp: "かわいいです！", romaji: "Kawaii desu!" },
+            { ch: "不好意思...", jp: "すみません...", romaji: "Sumimasen..." },
+            { ch: "有Wi-Fi嗎？", jp: "Wi-Fi ありますか？", romaji: "Wi-Fi arimasu ka?" },
+            { ch: "請幫幫我", jp: "たすけてください", romaji: "Tasukete kudasai" }
+        ];
+
+        const LEARNING_DATA = [
+            {
+                id: 'basic', cat: "基本禮貌", color: "bg-green-100 text-green-700",
+                words: [{jp:"こんにちは", ch:"你好"}, {jp:"ありがとう", ch:"謝謝"}, {jp:"ごめんなさい", ch:"對不起"}, {jp:"トイレ", ch:"廁所"}],
+                phrase: {jp:"トイレはどこですか？", ch:"請問廁所在哪裡？", r:"Toire wa doko desu ka?"}
+            },
+            {
+                id: 'shopping', cat: "逛街購物", color: "bg-purple-100 text-purple-700",
+                words: [{jp:"いくら", ch:"多少錢"}, {jp:"ふくろ", ch:"袋子"}, {jp:"ほしい", ch:"想要"}, {jp:"めんぜい", ch:"免稅"}],
+                phrase: {jp:"ふくろをください", ch:"請給我袋子", r:"Fukuro o kudasai"}
+            },
+            {
+                id: 'transport', cat: "交通探險", color: "bg-blue-100 text-blue-700",
+                words: [{jp:"でんしゃ", ch:"電車"}, {jp:"えき", ch:"車站"}, {jp:"きっぷ", ch:"票"}, {jp:"タクシー", ch:"計程車"}],
+                phrase: {jp:"これはおおさかに行きますか？", ch:"這個去大阪嗎？", r:"Kore wa Osaka ni ikimasu ka?"}
+            },
+            {
+                id: 'emergency', cat: "緊急求助", color: "bg-gray-100 text-gray-700",
+                words: [{jp:"たすけて", ch:"幫忙"}, {jp:"まいご", ch:"迷路"}, {jp:"いたい", ch:"痛"}, {jp:"びょういん", ch:"醫院"}],
+                phrase: {jp:"まいごになりました", ch:"我迷路了", r:"Maigo ni narimashita"}
+            }
+        ];
+
+        const USJ_RIDES = [
+            { name: "瑪利歐賽車", h: 107, area: "任天堂", type: "刺激", switch: true },
+            { name: "耀西冒險", h: 86, area: "任天堂", type: "溫和", switch: false },
+            { name: "哈利波特禁忌之旅", h: 122, area: "哈利波特", type: "刺激", switch: true },
+            { name: "鷹馬的飛行", h: 92, area: "哈利波特", type: "溫和", switch: true },
+            { name: "小小兵瘋狂乘車遊", h: 102, area: "小小兵", type: "刺激", switch: true },
+            { name: "小小兵冰凍雷射光", h: 92, area: "小小兵", type: "溫和", switch: false }
+        ];
+
         // --- 舊資料升級與防呆工具函數 ---
         // 這個函數會把舊版的記帳資料自動補齊「台幣換算」跟「分類」，避免程式當機
         function sanitizeExpenses(expensesList) {
@@ -222,7 +266,7 @@
         let currentTab = 'itinerary';
         let expandedDay = 1;
         let childHeight = 100;
-        let randomPhrase = { ch: "請叫救護車！", jp: "きゅうきゅうしゃをよんでください！", romaji: "Kyuukyuusha o yonde kudasai!" };
+        let randomPhrase = DAILY_PHRASES[0];
         let expandedSOS = null;
 
         // --- 初始化 ---
@@ -604,20 +648,14 @@
             container.innerHTML = `
                 <div class="space-y-6 fade-in pt-2">
                     
-                    <!-- 資料備份與雲端同步中心 -->
+                    <!-- 資料備份與匯出中心 -->
                     <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 rounded-2xl shadow-md text-white">
-                        <h3 class="text-lg font-bold mb-2 flex items-center gap-2"><i data-lucide="cloud-sync" class="w-5 h-5"></i> 雲端雙向同步 (Google Sheets)</h3>
-                        <p class="text-xs text-indigo-100 mb-4 leading-relaxed">一鍵將資料與雲端同步，兩支手機隨時保持最新狀態！您也可以在電腦打開 Excel 表格查看。</p>
+                        <h3 class="text-lg font-bold mb-2 flex items-center gap-2"><i data-lucide="database" class="w-5 h-5"></i> 手機資料備份與匯出</h3>
+                        <p class="text-xs text-indigo-100 mb-4 leading-relaxed">資料已在背景與雲端自動同步（也可點擊右上角雲朵手動觸發）。若需離線檔案，請點擊下方按鈕匯出：</p>
                         
-                        <div class="mb-4">
-                            <button onclick="cloudSync()" class="w-full bg-white text-indigo-700 py-3.5 rounded-xl text-base font-black shadow-lg hover:bg-indigo-50 flex justify-center items-center gap-2 active:scale-95 transition-transform">
-                                <i data-lucide="refresh-cw" class="w-5 h-5"></i> 立即執行雙向同步
-                            </button>
-                        </div>
-                        
-                        <div class="border-t border-indigo-400/50 pt-4 flex justify-between items-center">
-                            <span class="text-xs text-indigo-200">需要離線實體檔案？</span>
-                            <button onclick="downloadCSV()" class="text-xs bg-indigo-900/60 px-3 py-1.5 rounded-lg border border-indigo-400 hover:bg-indigo-800 shadow-sm flex items-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> 匯出 Excel (CSV)</button>
+                        <div class="grid grid-cols-2 gap-2 mt-2">
+                            <button onclick="downloadCSV()" class="bg-white text-indigo-700 py-3 rounded-xl text-sm font-bold shadow hover:bg-indigo-50 flex justify-center items-center gap-1"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> 匯出 Excel</button>
+                            <button onclick="downloadJSON()" class="bg-indigo-800 text-white border border-indigo-400 py-3 rounded-xl text-sm font-bold shadow hover:bg-indigo-700 flex justify-center items-center gap-1"><i data-lucide="download" class="w-4 h-4"></i> 下載完整備份</button>
                         </div>
                     </div>
 
@@ -723,6 +761,16 @@
 
         function deleteExpense(id) { appState.expenses = appState.expenses.filter(e => e.id !== id); render(); backgroundSync(); }
         
+        function downloadJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appState, null, 2));
+            const dlAnchorElem = document.createElement('a');
+            dlAnchorElem.setAttribute("href", dataStr);
+            dlAnchorElem.setAttribute("download", `大阪旅遊備份_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            document.body.removeChild(dlAnchorElem);
+        }
+
         function downloadCSV() {
             if(appState.expenses.length === 0) return alert("沒有資料可匯出！");
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF天數,分類,項目,日幣,台幣,時間\n";
