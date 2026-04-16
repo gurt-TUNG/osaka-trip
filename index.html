@@ -53,7 +53,7 @@
     <header class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-50 pt-safe">
         <div class="max-w-md mx-auto flex justify-between items-center pt-2">
             <div>
-                <h1 class="text-xl font-bold">大阪親子 7 日遊0406A</h1>
+                <h1 class="text-xl font-bold">大阪親子 7 日遊0416</h1>
                 <p class="text-xs text-blue-200" id="sync-status">2026/04/18 - 04/24 • 2大2小</p>
             </div>
             <div class="bg-blue-700 p-2 rounded-full shadow-inner cursor-pointer hover:bg-blue-800 transition-colors" onclick="cloudSync(true)">
@@ -70,7 +70,7 @@
                 <i data-lucide="home" class="w-6 h-6"></i><span class="text-[10px] font-medium">行程</span>
             </button>
             <button onclick="switchTab('tools')" class="nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400" id="btn-tools">
-                <i data-lucide="calculator" class="w-6 h-6"></i><span class="text-[10px] font-medium">記帳工具</span>
+                <i data-lucide="calculator" class="w-6 h-6"></i><span class="text-[10px] font-medium">記帳</span>
             </button>
             <button onclick="switchTab('learning')" class="nav-btn flex flex-col items-center justify-center w-full h-full space-y-1 text-gray-400" id="btn-learning">
                 <i data-lucide="book-open" class="w-6 h-6"></i><span class="text-[10px] font-medium">日語</span>
@@ -98,67 +98,88 @@
     </div>
 
     <script>
-        // === 核心設定與 API ===
         const HOTEL_ADDRESS = "大阪市西成区北開一丁目1番27号";
         const EXCHANGE_RATE = 0.21;
         const API_URL = "https://script.google.com/macros/s/AKfycbwDmOWroNSekoK1ekr0mQDgCxlXY7LbQbWue_67hGmJNgq-2ZQ6N60oFUjTWn5wGaOD2w/exec";
         
-        // --- 資料庫 ---
         const ITINERARY_DATA = [
             {
-                day: 1, date: "4/18 (六)", title: "抵達神戶 ➡️ 道頓堀", intensity: 5, location: "Dotonbori", displayLoc: "神戶機場 -> 大阪市區",
-                desc: "10:30 抵達神戶機場 (UKB)，搭乘 Port Liner 轉車前往大阪市區 Check-in。晚上前往道頓堀感受大阪熱鬧氣氛。",
-                meals: { b: "機上", l: "市區簡餐", d: "道頓堀/心齋橋商圈" },
-                baseSpots: ["神戶機場 (UKB)", "道頓堀/心齋橋", "跑跑人看板"]
+                day: 1, date: "4/18 (六)", title: "神戶動物王國 ➡️ 道頓堀", intensity: 5, location: "Kobe Animal Kingdom", displayLoc: "神戶 -> 大阪市區",
+                desc: "09:00 抵達神戶機場。搭乘電車 5 分鐘直達「神戶動物王國」近距離看動物。下午搭車前往大阪難波，轉計程車回飯店放行李。傍晚輕裝前往道頓堀吃晚餐。",
+                meals: { b: "機上", l: "動物王國園區內", d: "道頓堀/心齋橋商圈" },
+                baseSpots: ["神戶機場 (UKB)", "神戶動物王國", "飯店 Check-in", "道頓堀/心齋橋", "🍣 藏壽司 (備案)", "🍜 神座拉麵 (備案)", "🥟 551蓬萊肉包 (解饞)"]
             },
             {
-                day: 2, date: "4/19 (日)", title: "天王寺動物園 ➡️ 新世界", intensity: 6, location: "Tennoji Zoo", displayLoc: "天王寺 / 阿倍野",
-                desc: "輕鬆看動物，出園直接去新世界吃炸串，傍晚看通天閣或阿倍野夜景。",
-                meals: { b: "飯店/超商", l: "新世界串炸 (無辣全熟)", d: "阿倍野周邊" },
-                baseSpots: ["天王寺動物園", "新世界老街", "通天閣", "阿倍野 HARUKAS"]
+                day: 2, date: "4/19 (日)", title: "天王寺動物園 ➡️ 新世界/阿倍野", intensity: 6, location: "Tsutenkaku", displayLoc: "天王寺 / 新世界",
+                desc: "早上體驗道地的日本喫茶店早餐！隨後前往天王寺看動物，出園後直達新世界老街吃串炸。傍晚前往阿倍野看無敵夕陽與夜景。",
+                meals: { b: "☕ Komeda珈琲店", l: "🍢 達摩串炸", d: "阿倍野周邊美食街" },
+                baseSpots: ["Komeda珈琲店 (天王寺)", "天王寺動物園", "新世界老街", "通天閣", "阿倍野 HARUKAS", "🥩 達摩串炸 (新世界)", "🍣 大起水產 (備案)"]
             },
             {
                 day: 3, date: "4/20 (一)", title: "京都清水寺 ➡️ 老街", intensity: 7, location: "Kiyomizu-dera", displayLoc: "京都清水寺",
-                desc: "唯一跨縣市移動。清水寺及周邊老街漫步，體驗傳統日本風情。",
-                meals: { b: "超商", l: "京都湯豆腐/烏龍麵", d: "大阪市區迴轉壽司" },
-                baseSpots: ["清水寺", "二年坂 / 三年坂", "八坂神社"]
+                desc: "早上先去難波買現烤的老爺爺起司蛋糕當美味早餐！隨後搭車前往京都。清水寺及周邊老街漫步，體驗傳統日本風情。",
+                meals: { b: "🍰 老爺爺起司蛋糕", l: "🍜 京都湯豆腐/烏龍麵", d: "大阪市區餐廳" },
+                baseSpots: ["老爺爺起司蛋糕 (難波)", "清水寺", "二年坂 / 三年坂", "八坂神社", "🍜 金龍拉麵 (備案)"]
             },
             {
-                day: 4, date: "4/21 (二)", title: "🔥 環球影城 USJ", intensity: 10, location: "Universal Studios Japan", displayLoc: "USJ 環球影城",
-                desc: "避開週一！全日戰鬥行程。超級任天堂世界主場，早出晚歸。",
-                meals: { b: "便利商店飯糰", l: "園區輕食", d: "超商炸雞/便當" },
-                baseSpots: ["超級任天堂世界", "小小兵樂園", "環球奇境"]
+                day: 4, date: "4/21 (二)", title: "🔥 環球影城 USJ (🌧️雨天)", intensity: 10, location: "Universal Studios Japan", displayLoc: "USJ 環球影城",
+                desc: "🌧️【雨天提醒】預報有雨，建議自備輕便雨衣。早上先在園外吃華麗的火山鬆餅躲雨補體力。入園後善用『環球奇境』室內設施，午餐安排室內主題餐廳。",
+                meals: { b: "🥞 Eggs 'n Things (USJ園外)", l: "🍄 奇諾比奧咖啡店 (室內躲雨)", d: "USJ園外商場餐廳" },
+                baseSpots: ["Eggs 'n Things (USJ)", "超級任天堂世界", "奇諾比奧咖啡店", "環球奇境", "🍣 藏壽司 (USJ園外)"]
             },
             {
                 day: 5, date: "4/22 (三)", title: "任天堂官方店 ➡️ 梅田", intensity: 4, location: "Daimaru Umeda", displayLoc: "大阪梅田商圈",
-                desc: "USJ 隔日體力恢復。主攻大丸梅田 13F 的任天堂與寶可夢中心。",
-                meals: { b: "飯店", l: "大丸百貨美食街", d: "梅田周邊燒肉/壽喜燒" },
-                baseSpots: ["Nintendo OSAKA", "寶可夢中心", "梅田商圈"]
+                desc: "USJ 隔日體力恢復。早上享用世界第一好吃的 Bills 鬆餅！主攻大丸梅田 13F 的任天堂與寶可夢中心，午餐吃知名紐約漢堡。",
+                meals: { b: "🥞 Bills 鬆餅 (大阪梅田)", l: "🍔 Shake Shack 漢堡", d: "梅田商圈餐廳" },
+                baseSpots: ["Bills 鬆餅 (梅田)", "Nintendo OSAKA", "寶可夢中心", "Shake Shack (梅田)", "🥩 敘敘苑燒肉 (備案)", "🍜 一風堂 (備案)"]
             },
             {
-                day: 6, date: "4/23 (四)", title: "海遊館 ➡️ 天保山", intensity: 6, location: "Osaka Aquarium Kaiyukan", displayLoc: "大阪港灣區",
-                desc: "港灣區看鯨鯊。下坡好走，下午搭摩天輪。",
-                meals: { b: "超商", l: "天保山大阪燒", d: "市區簡餐" },
-                baseSpots: ["海遊館 (鯨鯊)", "天保山摩天輪", "聖瑪麗亞號"]
+                day: 6, date: "4/23 (四)", title: "海遊館 ➡️ 天保山 (🌧️雨天)", intensity: 6, location: "Osaka Aquarium Kaiyukan", displayLoc: "大阪港灣區",
+                desc: "🌧️【雨天提醒】今天行程完美避雨！早上先在室內吃厚鬆餅，海遊館與天保山美食街皆為全室內。摩天輪視風雨狀況決定是否搭乘。",
+                meals: { b: "☕ 星乃珈琲店 (舒芙蕾鬆餅)", l: "🍳 北極星蛋包飯 (天保山室內)", d: "市區餐廳" },
+                baseSpots: ["星乃珈琲店", "海遊館 (鯨鯊)", "北極星蛋包飯 (天保山)", "天保山摩天輪", "🍜 自由軒咖哩飯 (備案)"]
             },
             {
-                day: 7, date: "4/24 (五)", title: "最後採買 ➡️ 返台", intensity: 5, location: "Rinku Premium Outlets", displayLoc: "市區 / 關西機場",
-                desc: "最後藥妝補貨或臨空城 Outlet。準備搭乘 20:55 班機返台。",
-                meals: { b: "退房", l: "市區/Outlet 美食", d: "關西機場" },
-                baseSpots: ["臨空城 Outlet", "關西機場"]
+                day: 7, date: "4/24 (五)", title: "黑門市場 ➡️ 臨空城 (🌧️雨天)", intensity: 5, location: "Rinku Premium Outlets", displayLoc: "市區 / 關西機場",
+                desc: "🌧️【雨天提醒】早上前往有頂棚遮蔽的黑門市場大啖草莓與海鮮！下午前往臨空城 Outlet (半室內需撐傘) 最後採購。預計 18:30 抵達機場。",
+                meals: { b: "🍓 黑門市場 (草莓/和牛串)", l: "🛍️ Outlet 美食街", d: "關西機場餐廳" },
+                baseSpots: ["黑門市場 (吃草莓/海鮮)", "🥩 國產牛燒肉 (黑門備案)", "臨空城 Outlet", "關西機場"]
             }
         ];
 
+        // --- 景點介紹資料庫 (純文字介紹版，無圖片連結) ---
         const SPOT_DETAILS = {
-            "道頓堀/心齋橋": { desc: "大阪最熱鬧的美食購物商圈。著名的巨大立體招牌非常吸引小朋友。人潮擁擠，請牽好小朋友。", img: "https://images.pexels.com/photos/34728995/pexels-photo-34728995.jpeg" },
-            "跑跑人看板": { desc: "固力果跑跑人是大阪代表性地標。晚上點燈後非常漂亮，適合全家合照。", img: "https://images.pexels.com/photos/8050487/pexels-photo-8050487.jpeg?_gl=1*boy3l4*_ga*MjAwNTM3NjM5MS4xNzc1NDg3MDA0*_ga_8JE65Q40S6*czE3NzU0ODcwMDQkbzEkZzEkdDE3NzU0ODcwNTIkajEyJGwwJGgw" },
-            "天王寺動物園": { desc: "百年歷史市區動物園，佔地不大、地勢平坦，小朋友走起來不費力。", img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Tennoji_Zoo_entrance_2019.jpg/800px-Tennoji_Zoo_entrance_2019.jpg" },
-            "新世界老街": { desc: "復古風情老街，串炸發源地。串炸多為熟食，沾醬甜甜的，小朋友接受度高。", img: "https://images.unsplash.com/photo-1542055990-2ee2f9dbb4ec?q=80&w=800&auto=format&fit=crop" },
-            "清水寺": { desc: "京都著名木造寺廟。前往寺廟有上坡路，建議慢慢走，沿途可逛伴手禮店。", img: "https://images.unsplash.com/photo-1624253321171-1be53e12f5f4?q=80&w=800&auto=format&fit=crop" },
-            "超級任天堂世界": { desc: "USJ最受歡迎園區！建議買「能量手環」敲金幣。（注意：瑪利歐賽車需滿107cm）", img: "https://images.unsplash.com/photo-1605901309584-818e25960b8f?q=80&w=800&auto=format&fit=crop" },
-            "Nintendo OSAKA": { desc: "大丸梅田13樓的任天堂官方店！販售獨家周邊，旁邊是寶可夢中心，小朋友的天堂。", img: "https://images.unsplash.com/photo-1612404730960-5c71577fca11?q=80&w=800&auto=format&fit=crop" },
-            "海遊館 (鯨鯊)": { desc: "世界最大級水族館之一。「螺旋狀緩坡」設計不需爬樓梯，對家庭極度友善。", img: "https://images.unsplash.com/photo-1582967788606-a171c1080cb0?q=80&w=800&auto=format&fit=crop" },
-            "關西機場": { desc: "20:55 航班，建議 18:30 前抵達辦理報到與托運。", img: "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?q=80&w=800&auto=format&fit=crop" }
+            "神戶動物王國": { desc: "關西超強親子動物園！可以近距離摸水豚、餵袋鼠，室內場地不怕下雨，非常適合帶小朋友。" },
+            "道頓堀/心齋橋": { desc: "大阪最熱鬧的美食購物商圈。著名的巨大立體招牌非常吸引小朋友。人潮擁擠，請牽好小朋友。" },
+            "天王寺動物園": { desc: "百年歷史市區動物園，佔地不大、地勢平坦，小朋友走起來不費力。" },
+            "新世界老街": { desc: "復古風情老街，串炸發源地。串炸多為熟食，沾醬甜甜的，小朋友接受度高。" },
+            "阿倍野 HARUKAS": { desc: "日本最高的摩天大樓之一，位於天王寺站旁。觀景台(需購票)可以俯瞰整個大阪，夕陽與夜景極美。" },
+            "清水寺": { desc: "京都著名木造寺廟。前往寺廟有上坡路，建議慢慢走，沿途可逛伴手禮店。" },
+            "超級任天堂世界": { desc: "USJ最受歡迎園區！建議買「能量手環」敲金幣。（注意：瑪利歐賽車需滿107cm）" },
+            "Nintendo OSAKA": { desc: "大丸梅田13樓的任天堂官方店！販售獨家周邊，旁邊是寶可夢中心，小朋友的天堂。" },
+            "海遊館 (鯨鯊)": { desc: "世界最大級水族館之一。「螺旋狀緩坡」設計不需爬樓梯，對家庭極度友善。" },
+            "關西機場": { desc: "20:55 航班，建議 18:30 前抵達辦理報到與托運。" },
+            "Komeda珈琲店 (天王寺)": { desc: "名古屋發跡的知名咖啡店，早上點一杯飲料就免費送烤吐司與水煮蛋，是絕佳的日本道地早餐體驗！" },
+            "老爺爺起司蛋糕 (難波)": { desc: "大阪必吃排隊名店！剛出爐會搖晃的起司蛋糕，入口即化，買一整個全家當早餐吃超幸福。" },
+            "Eggs 'n Things (USJ)": { desc: "位於環球影城外圍步行街。招牌是超浮誇的鮮奶油火山鬆餅，下雨天可以先來吃早餐躲雨兼補充體力！" },
+            "奇諾比奧咖啡店": { desc: "任天堂世界內最熱門的主題餐廳！有蘑菇造型漢堡與提拉米蘇，是下雨天最好的室內用餐點。" },
+            "Bills 鬆餅 (梅田)": { desc: "被紐約時報譽為『世界第一好吃的早餐』！招牌香蕉奶油雲朵鬆餅，大人小孩都會瞬間愛上。" },
+            "Shake Shack (梅田)": { desc: "知名紐約漢堡店，位於梅田阪神百貨內。牛肉漢堡排多汁，起司波浪薯條更是小朋友的最愛。" },
+            "星乃珈琲店": { desc: "復古日式喫茶店，招牌是超厚實的『窯烤舒芙蕾鬆餅』，環境舒適，非常適合雨天悠閒吃早餐。" },
+            "北極星蛋包飯 (天保山)": { desc: "日本蛋包飯創始店！位於天保山室內美食街（浪花美食橫丁）內，完美躲雨的午餐首選。" },
+            "黑門市場 (吃草莓/海鮮)": { desc: "大阪人的廚房！整條街都有遮雨棚，下雨也不怕。可以買又大又甜的草莓當早餐，大人吃現烤和牛。" },
+            // --- 新增備用美食介紹 ---
+            "🍣 藏壽司 (備案)": { desc: "平價連鎖迴轉壽司，吃五盤可以轉扭蛋，是小朋友的最愛！不想吃生食也有烏龍麵跟炸物可選。" },
+            "🍣 藏壽司 (USJ園外)": { desc: "位於環球影城外的 CityWalk 步行街。在園外想吃平價且適合小朋友的晚餐，這是極佳選擇。" },
+            "🍣 大起水產 (備案)": { desc: "食材新鮮的平價迴轉壽司，如果不想排隊等藏壽司，這家是在地人非常推薦的美味選擇。" },
+            "🍜 神座拉麵 (備案)": { desc: "大阪人氣拉麵！以白菜熬煮的醬油湯頭非常清甜，有別於一般濃郁豚骨，特別適合給小朋友吃。" },
+            "🍜 金龍拉麵 (備案)": { desc: "道頓堀標誌性的立體龍招牌，白飯、泡菜、韭菜免費無限續加，口味清爽適合全家。" },
+            "🍜 一風堂 (備案)": { desc: "知名豚骨拉麵店，湯頭香醇但不死鹹，點一碗配上煎餃，是最安穩好吃的選擇。" },
+            "🥩 達摩串炸 (新世界)": { desc: "大阪最經典的串炸老店，生氣老闆招牌是打卡必備。麵衣薄脆，推薦炸起司、炸鵪鶉蛋。" },
+            "🥩 敘敘苑燒肉 (備案)": { desc: "想犒賞自己一頓好的？日本頂級高級燒肉連鎖店，服務極佳，中午的商業午餐套餐非常划算！" },
+            "🥩 國產牛燒肉 (黑門備案)": { desc: "高品質的日本國產牛吃到飽！適合在黑門市場逛完後，想大口吃肉補充體力的完美備案。" },
+            "🥟 551蓬萊肉包 (解饞)": { desc: "關西限定的靈魂美食！熱騰騰的豬肉包子香氣四溢，非常適合當作逛街時的解饞小點心。" },
+            "🍜 自由軒咖哩飯 (備案)": { desc: "百年老店，招牌是把生雞蛋拌入熱騰騰的咖哩飯中，口感滑順獨特，是大阪特有的名物。" }
         };
 
         const EXPENSE_CATEGORIES = [
@@ -212,7 +233,6 @@
             { name: "小小兵冰凍雷射光", h: 92, area: "小小兵", type: "溫和", switch: false }
         ];
 
-        // --- 舊資料升級與防呆工具函數 (加入 CRUD 必備屬性) ---
         function sanitizeExpenses(expensesList) {
             if (!Array.isArray(expensesList)) return [];
             expensesList.forEach(e => {
@@ -223,7 +243,6 @@
                     e.formula = e.formula || String(e.jpy);
                     e.day = e.day || 1;
                 }
-                // CRUD 新增：確保每筆資料都有 updatedAt 時間戳記，與 deleted 軟刪除標籤
                 if (!e.updatedAt) e.updatedAt = e.id; 
                 if (e.deleted === undefined) e.deleted = false;
             });
@@ -239,7 +258,6 @@
              return packingList;
         }
 
-        // --- APP 狀態 ---
         const DEFAULT_STATE = {
             expenses: [], 
             packing: [
@@ -270,18 +288,13 @@
         let childHeight = 100;
         let randomPhrase = DAILY_PHRASES[0];
         let expandedSOS = null;
-        let editingExpenseId = null; // 紀錄目前正在編輯的記帳 ID
+        let editingExpenseId = null; 
 
-        // --- 初始化 ---
         document.addEventListener('DOMContentLoaded', () => { 
             cyclePhrase(); 
             render(); 
-            cloudSync(false); // 啟動時背景同步 (不顯示 loading 畫面)
+            cloudSync(false); 
         });
-
-        // ==========================================
-        // ☁️ 專業雲端同步核心邏輯 (支援 CRUD 智慧合併)
-        // ==========================================
 
         function showLoading(show, text="處理中...") {
             const overlay = document.getElementById('loading-overlay');
@@ -312,7 +325,6 @@
 
         async function performSync() {
             try {
-                // 1. 抓取雲端資料
                 const res = await fetch(API_URL);
                 const result = await res.json();
                 
@@ -323,28 +335,22 @@
 
                 let mergedState = { ...appState };
                 
-                // 2. 合併記帳 (以 ID 與 updatedAt 為準)
                 if (cloudState.expenses) {
                     cloudState.expenses = sanitizeExpenses(cloudState.expenses);
-                    
                     cloudState.expenses.forEach(cEx => {
                         const mExIndex = mergedState.expenses.findIndex(m => m.id === cEx.id);
                         if (mExIndex === -1) {
-                            // 本地沒有，直接加入
                             mergedState.expenses.push(cEx);
                         } else {
-                            // 本地有，比對 updatedAt，誰比較新就用誰的
                             const mEx = mergedState.expenses[mExIndex];
                             if (cEx.updatedAt > mEx.updatedAt) {
-                                mergedState.expenses[mExIndex] = cEx; // 雲端比較新，覆蓋本地
+                                mergedState.expenses[mExIndex] = cEx; 
                             }
-                            // 如果本地比較新 (mEx.updatedAt > cEx.updatedAt)，就保留本地的，等一下會整包上傳
                         }
                     });
-                    mergedState.expenses.sort((a, b) => b.id - a.id); // 依建立時間排序
+                    mergedState.expenses.sort((a, b) => b.id - a.id); 
                 }
 
-                // 3. 合併清單 (以 ID 與 updatedAt 為準)
                 if (cloudState.packing) {
                     cloudState.packing = sanitizePacking(cloudState.packing);
                     cloudState.packing.forEach(cPk => {
@@ -360,7 +366,6 @@
                     });
                 }
 
-                // 狀態合併 (簡單聯集)
                 mergedState.completedSpots = { ...cloudState.completedSpots, ...mergedState.completedSpots };
                 mergedState.hiddenDays = { ...cloudState.hiddenDays, ...mergedState.hiddenDays };
 
@@ -374,11 +379,9 @@
                     });
                 }
 
-                // 4. 儲存合併結果到本地
                 appState = mergedState;
                 saveState();
 
-                // 5. 上傳合併後的最新資料回 Google Sheets
                 await fetch(API_URL, {
                     method: 'POST',
                     body: JSON.stringify({ data: JSON.stringify(appState) })
@@ -388,11 +391,6 @@
                 throw err;
             }
         }
-
-
-        // ==========================================
-        // 🎨 UI 渲染邏輯
-        // ==========================================
 
         function render() {
             const content = document.getElementById('app-content');
@@ -414,9 +412,13 @@
         }
 
         function switchTab(tab) { currentTab = tab; render(); }
-        function getMapLink(keyword) { return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(keyword)}`; }
+        
+        // 替換備案名稱中的特殊符號以利 Google Maps 準確搜尋
+        function getMapLink(keyword) { 
+            const cleanKeyword = keyword.replace(' (備案)', '').replace(' (解饞)', '').replace(' (USJ園外)', '').replace(' (新世界)', '').replace(' (難波)', '').replace(' (梅田)', '').replace(' (天王寺)', '').replace(' (吃草莓/海鮮)', '').replace(' (黑門備案)', '').replace(' (天保山)', '').replace(' (鯨鯊)', '');
+            return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanKeyword + ' 大阪')}`; 
+        }
 
-        // --- 1. 行程表 ---
         function renderItinerary(container) {
             let html = `<div class="space-y-4 fade-in pt-2">`;
 
@@ -434,8 +436,13 @@
                     return;
                 }
 
-                const intensityColor = day.intensity >= 8 ? "bg-red-100 text-red-800" : (day.intensity >= 5 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800");
-                const intensityLabel = day.intensity >= 8 ? "高強度" : (day.intensity >= 5 ? "中等" : "輕鬆");
+                // 特殊標記雨天的顏色
+                let intensityColor = day.intensity >= 8 ? "bg-red-100 text-red-800" : (day.intensity >= 5 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800");
+                let intensityLabel = day.intensity >= 8 ? "高強度" : (day.intensity >= 5 ? "中等" : "輕鬆");
+                if (day.title.includes("雨天")) {
+                    intensityColor = "bg-blue-100 text-blue-800 border border-blue-300";
+                    intensityLabel = "🌧️ 雨備";
+                }
                 
                 const custom = appState.customSpots[day.day] || [];
                 let spotsHtml = '';
@@ -444,23 +451,26 @@
                     const spotKey = `${day.day}-${s}`;
                     const isCompleted = appState.completedSpots[spotKey];
                     const hasInfo = SPOT_DETAILS[s] ? true : false;
+                    const isBackup = s.includes("備案") || s.includes("解饞");
+                    const iconColor = isBackup ? "text-orange-500" : "text-blue-600";
+                    const bgColor = isBackup ? "bg-orange-50/80 border-orange-100" : "bg-blue-50/80 border-blue-100";
+                    const textColor = isBackup ? "text-orange-900" : "text-blue-900";
                     
                     spotsHtml += `
-                        <div class="flex items-center justify-between gap-2 mb-2 p-2.5 bg-blue-50/80 rounded-xl border border-blue-100 shadow-sm">
+                        <div class="flex items-center justify-between gap-2 mb-2 p-2.5 ${bgColor} rounded-xl border shadow-sm">
                             <div class="flex items-center gap-3 flex-1 cursor-pointer" onclick="toggleCompleteSpot('${spotKey}')">
-                                <input type="checkbox" ${isCompleted ? 'checked' : ''} class="w-5 h-5 accent-blue-600 pointer-events-none rounded">
-                                <span class="text-base flex-1 ${isCompleted ? 'line-through text-gray-400' : 'text-blue-900 font-bold'}">${s}</span>
+                                <input type="checkbox" ${isCompleted ? 'checked' : ''} class="w-5 h-5 accent-${isBackup ? 'orange' : 'blue'}-600 pointer-events-none rounded">
+                                <span class="text-base flex-1 ${isCompleted ? 'line-through text-gray-400' : `${textColor} font-bold`}">${s}</span>
                             </div>
                             <div class="flex gap-1">
-                                ${hasInfo ? `<button onclick="showSpotInfo('${s}')" class="p-1.5 bg-blue-100 rounded-md text-blue-600 hover:bg-blue-200 flex items-center gap-1 text-xs font-bold"><i data-lucide="info" class="w-4 h-4"></i> 介紹</button>` : ''}
-                                <a href="${getMapLink(s + ' 大阪')}" target="_blank" class="p-1.5 bg-white rounded-md border border-blue-200 text-blue-600 hover:bg-blue-100 flex items-center gap-1 text-xs font-bold"><i data-lucide="map" class="w-4 h-4"></i> 地圖</a>
+                                ${hasInfo ? `<button onclick="showSpotInfo('${s}')" class="p-1.5 bg-white rounded-md ${iconColor} hover:bg-gray-50 flex items-center gap-1 text-xs font-bold shadow-sm border"><i data-lucide="info" class="w-4 h-4"></i> 介紹</button>` : ''}
+                                <a href="${getMapLink(s)}" target="_blank" class="p-1.5 bg-white rounded-md border ${iconColor} hover:bg-gray-50 flex items-center gap-1 text-xs font-bold shadow-sm"><i data-lucide="map" class="w-4 h-4"></i> 地圖</a>
                             </div>
                         </div>
                     `;
                 });
                 
                 custom.forEach(cs => {
-                    // 檢查自訂行程是否有被軟刪除
                     if (cs.deleted) return;
 
                     const spotKey = `custom-${cs.id}`;
@@ -472,7 +482,7 @@
                                 <span class="text-base flex-1 ${isCompleted ? 'line-through text-gray-400' : 'text-purple-900 font-bold'}">${cs.text}</span>
                             </div>
                             <div class="flex gap-1 flex-shrink-0">
-                                <a href="${getMapLink(cs.text + ' 大阪')}" target="_blank" class="p-1.5 bg-white rounded-md border border-purple-200 text-purple-600 hover:bg-purple-100 flex items-center gap-1 text-xs font-bold"><i data-lucide="map" class="w-4 h-4"></i></a>
+                                <a href="${getMapLink(cs.text)}" target="_blank" class="p-1.5 bg-white rounded-md border border-purple-200 text-purple-600 hover:bg-purple-50 flex items-center gap-1 text-xs font-bold shadow-sm"><i data-lucide="map" class="w-4 h-4"></i></a>
                                 <button onclick="deleteCustomSpot(${day.day}, ${cs.id})" class="p-1.5 bg-red-50 rounded-md border border-red-200 text-red-500 hover:bg-red-100"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                             </div>
                         </div>
@@ -483,12 +493,12 @@
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-500' : ''}">
                         <div class="p-4 flex items-center justify-between cursor-pointer bg-white" onclick="toggleDay(${day.day})">
                             <div class="flex items-center gap-3">
-                                <div class="flex flex-col items-center justify-center w-12 h-12 bg-gray-100 rounded-xl text-gray-600 font-bold shadow-inner">
+                                <div class="flex flex-col items-center justify-center w-12 h-12 ${day.title.includes("雨天") ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'} rounded-xl font-bold shadow-inner">
                                     <span class="text-[10px] uppercase tracking-wider">Day</span>
                                     <span class="text-xl">${day.day}</span>
                                 </div>
                                 <div>
-                                    <div class="text-xs text-gray-500 mb-0.5">${day.date}</div>
+                                    <div class="text-xs ${day.title.includes("雨天") ? 'text-blue-500 font-bold' : 'text-gray-500'} mb-0.5">${day.date}</div>
                                     <h3 class="text-lg font-extrabold text-gray-800 leading-tight">${day.title}</h3>
                                 </div>
                             </div>
@@ -500,10 +510,12 @@
                             <div class="flex justify-end mb-3">
                                 <button onclick="toggleHideDay(${day.day})" class="text-xs text-gray-500 hover:text-gray-800 flex items-center gap-1 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm"><i data-lucide="eye-off" class="w-4 h-4"></i> 隱藏此日行程</button>
                             </div>
-                            <p class="text-gray-600 text-sm leading-relaxed mb-4 border-l-2 border-blue-400 pl-3">${day.desc}</p>
+                            <p class="text-gray-600 text-sm leading-relaxed mb-4 border-l-2 ${day.title.includes("雨天") ? 'border-blue-500' : 'border-blue-400'} pl-3">${day.desc}</p>
                             
                             <div class="mb-5">
-                                <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">行程地標 (點擊打勾)</h4>
+                                <h4 class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider flex justify-between items-center">
+                                    <span>行程地標與備用餐廳</span>
+                                </h4>
                                 ${spotsHtml}
                                 
                                 <div class="flex items-center justify-between gap-2 mt-3 mb-2 p-2.5 bg-indigo-50 rounded-xl border border-indigo-200 shadow-sm">
@@ -517,13 +529,13 @@
                                 </div>
 
                                 <div class="flex gap-2 mt-3">
-                                    <input type="text" id="add-spot-${day.day}" placeholder="臨時加行程..." class="flex-1 border border-gray-300 p-2.5 text-sm rounded-lg bg-white shadow-inner">
+                                    <input type="text" id="add-spot-${day.day}" placeholder="臨時加行程或餐廳..." class="flex-1 border border-gray-300 p-2.5 text-sm rounded-lg bg-white shadow-inner">
                                     <button onclick="addCustomSpot(${day.day})" class="bg-gray-800 text-white px-5 py-2.5 rounded-lg text-sm font-bold shadow hover:bg-black transition-colors">新增</button>
                                 </div>
                             </div>
 
                             <div class="bg-orange-50 p-4 rounded-xl border border-orange-100 shadow-sm">
-                                <h4 class="text-xs font-bold text-orange-800 mb-3 flex items-center gap-1 uppercase tracking-wider"><i data-lucide="utensils" class="w-4 h-4"></i> 餐食規劃</h4>
+                                <h4 class="text-xs font-bold text-orange-800 mb-3 flex items-center gap-1 uppercase tracking-wider"><i data-lucide="utensils" class="w-4 h-4"></i> 主力餐飲打卡點</h4>
                                 <div class="grid grid-cols-1 gap-2.5 text-sm text-gray-800">
                                     <div class="flex items-center gap-2"><span class="bg-orange-200 text-orange-800 px-2 py-0.5 rounded text-xs font-bold w-8 text-center">早</span> <span class="font-medium">${day.meals.b}</span></div>
                                     <div class="flex items-center gap-2"><span class="bg-orange-200 text-orange-800 px-2 py-0.5 rounded text-xs font-bold w-8 text-center">午</span> <span class="font-medium">${day.meals.l}</span></div>
@@ -539,24 +551,15 @@
             container.innerHTML = html;
         }
 
+        // 修改彈出視窗：移除圖片區域，專注純文字介紹
         function showSpotInfo(spotName) {
             const info = SPOT_DETAILS[spotName];
             if(!info) return;
-            
-            let imgHtml = '';
-            if (info.img && info.img.startsWith('http')) {
-                // 如果是網址，就顯示真實圖片
-                imgHtml = `<img src="${info.img}" alt="${spotName}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/400x200?text=Image+Not+Found'">`;
-            } else {
-                // 否則顯示文字
-                imgHtml = `<span class="text-xs text-gray-400 font-mono">${info.img || '尚無圖片'}</span>`;
-            }
 
             document.getElementById('modal-title').innerText = `ℹ️ ${spotName}`;
             document.getElementById('modal-body').innerHTML = `
-                <div class="mt-2 text-sm text-gray-700 leading-relaxed">${info.desc}</div>
-                <div class="mt-4 rounded-xl overflow-hidden bg-gray-100 flex items-center justify-center h-48 border border-gray-200 shadow-inner">
-                    ${imgHtml}
+                <div class="mt-2 text-sm text-gray-700 leading-relaxed p-4 bg-gray-50 rounded-xl border border-gray-100 shadow-inner">
+                    ${info.desc}
                 </div>
             `;
             document.getElementById('modal-overlay').style.display = 'flex';
@@ -571,25 +574,21 @@
             const input = document.getElementById(`add-spot-${day}`);
             if (!input.value.trim()) return;
             if (!appState.customSpots[day]) appState.customSpots[day] = [];
-            // CRUD 新增：賦予 id
             appState.customSpots[day].push({ id: Date.now(), text: input.value.trim(), deleted: false });
             render();
             cloudSync(false);
         }
         function deleteCustomSpot(day, id) { 
-            // CRUD 刪除：軟刪除
             const spot = appState.customSpots[day].find(s => s.id === id);
             if (spot) spot.deleted = true;
             render(); 
             cloudSync(false);
         }
 
-        // --- 2. 記帳工具頁 (支援 CRUD 編輯與軟刪除) ---
         function renderTools(container) {
             let totalTWD = 0;
             let stats = { food:0, shopping:0, transport:0, ticket:0, other:0 };
             
-            // 過濾掉被軟刪除的資料再進行統計
             const activeExpenses = appState.expenses.filter(e => !e.deleted);
 
             activeExpenses.forEach(e => {
@@ -622,7 +621,6 @@
                 `;
             }).join('');
 
-            // 如果正在編輯，從 appState 取出該筆資料回填表單
             let formVals = { day: 1, catId: 'food', desc: '', formula: '' };
             let btnText = "新增", btnColor = "bg-blue-600 hover:bg-blue-700";
             if (editingExpenseId) {
@@ -636,7 +634,6 @@
             const catOptions = EXPENSE_CATEGORIES.map(c => `<option value="${c.id}" ${c.id===formVals.catId?'selected':''}>${c.icon} ${c.label}</option>`).join('');
             const dayOptions = [1,2,3,4,5,6,7].map(d => `<option value="${d}" ${d===formVals.day?'selected':''}>Day ${d}</option>`).join('');
 
-            // 圓餅圖
             let conicStops = [];
             let currentPct = 0;
             let hasData = false;
@@ -674,7 +671,6 @@
             }).join('');
             if(!statsHtml) statsHtml = '<p class="text-xs text-gray-400 text-center">目前沒有分類資料</p>';
 
-            // USJ 身高
             let rideHtml = '';
             USJ_RIDES.forEach(ride => {
                 const ok = childHeight >= ride.h;
@@ -695,7 +691,6 @@
             container.innerHTML = `
                 <div class="space-y-6 fade-in pt-2">
                     
-                    <!-- 專業記帳本 -->
                     <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-200">
                         <div class="flex justify-between items-center mb-4 pb-3 border-b border-gray-100">
                             <div class="flex items-center gap-2">
@@ -708,7 +703,6 @@
                             </div>
                         </div>
                         
-                        <!-- 記帳表單 (支援新增與修改) -->
                         <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 shadow-sm ${editingExpenseId ? 'ring-2 ring-green-400' : ''}">
                             ${editingExpenseId ? '<div class="text-xs font-bold text-green-600 mb-2 flex items-center gap-1"><i data-lucide="edit-3" class="w-3 h-3"></i> 正在修改資料...</div>' : ''}
                             <div class="flex gap-2 mb-2">
@@ -727,7 +721,6 @@
                             ${editingExpenseId ? '<button onclick="cancelEdit()" class="w-full mt-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 font-medium">取消修改</button>' : `<div class="text-[10px] text-gray-400 mt-1.5 text-right">匯率: ${EXCHANGE_RATE} (自動算台幣)</div>`}
                         </div>
 
-                        <!-- 統計與明細 Tab -->
                         <div class="flex p-1 bg-gray-100 rounded-xl mb-3 shadow-inner">
                             <button onclick="document.getElementById('ex-list-view').classList.remove('hidden'); document.getElementById('ex-stat-view').classList.add('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-gray-800">所有明細</button>
                             <button onclick="document.getElementById('ex-list-view').classList.add('hidden'); document.getElementById('ex-stat-view').classList.remove('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700">分類統計圖</button>
@@ -740,7 +733,6 @@
                         </div>
                     </div>
 
-                    <!-- 資料匯出中心 -->
                     <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-5 rounded-2xl shadow-md text-white">
                         <h3 class="text-base font-bold mb-2 flex items-center gap-2"><i data-lucide="database" class="w-5 h-5"></i> 資料匯出</h3>
                         <p class="text-xs text-indigo-100 mb-3 leading-relaxed">資料已在背景與雲端自動同步，若需離線檔案，請點擊下方：</p>
@@ -751,7 +743,6 @@
                         </div>
                     </div>
 
-                    <!-- USJ 身高 -->
                     <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
                         <div class="flex items-center gap-2 mb-4">
                             <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="baby" class="w-6 h-6"></i></div>
@@ -766,10 +757,9 @@
                     </div>
                 </div>
             `;
-            if(editingExpenseId) previewCalc(); // 如果正在編輯，自動預覽算式
+            if(editingExpenseId) previewCalc(); 
         }
 
-        // --- 記帳 CRUD 邏輯 ---
         function previewCalc() {
             const input = document.getElementById('ex-formula').value;
             const withPlus = input.replace(/\s+/g, '+'); 
@@ -783,7 +773,6 @@
             } catch(e) { document.getElementById('ex-preview').innerText = ''; }
         }
 
-        // 觸發編輯模式
         function editExpense(id) {
             editingExpenseId = id;
             render();
@@ -811,18 +800,16 @@
                 const twd = Math.round(jpy * EXCHANGE_RATE);
                 
                 if (editingExpenseId) {
-                    // Update 修改
                     const index = appState.expenses.findIndex(e => e.id === editingExpenseId);
                     if (index !== -1) {
                         appState.expenses[index] = {
                             ...appState.expenses[index],
                             day, catId, desc, formula: rawFormula, jpy, twd,
-                            updatedAt: Date.now() // 更新時間戳記，確保同步時能覆蓋舊資料
+                            updatedAt: Date.now() 
                         };
                     }
                     editingExpenseId = null;
                 } else {
-                    // Create 新增
                     const now = Date.now();
                     appState.expenses.unshift({
                         id: now, updatedAt: now, deleted: false,
@@ -839,7 +826,6 @@
         }
 
         function deleteExpense(id) { 
-            // CRUD 刪除：軟刪除 (Soft Delete)，加上 updatedAt 讓雲端知道這筆被刪了
             const exp = appState.expenses.find(e => e.id === id);
             if (exp) {
                 exp.deleted = true;
@@ -917,7 +903,6 @@
 
         // --- 4. 行前清單 ---
         function renderPacking(container) {
-            // 過濾掉被軟刪除的清單
             const activePacking = appState.packing.filter(p => !p.deleted);
 
             const listHtml = activePacking.map(item => `
@@ -949,23 +934,9 @@
             `;
         }
 
-        function togglePacking(id) { 
-            const item = appState.packing.find(p => p.id === id); 
-            if (item) { item.checked = !item.checked; item.updatedAt = Date.now(); } 
-            render(); cloudSync(false); 
-        }
-        function addPacking() { 
-            const input = document.getElementById('new-pack-item'); 
-            if(!input.value.trim()) return; 
-            const now = Date.now();
-            appState.packing.push({ id: now, text: input.value.trim(), checked: false, updatedAt: now, deleted: false }); 
-            render(); cloudSync(false); 
-        }
-        function deletePacking(id) { 
-            const item = appState.packing.find(p => p.id === id);
-            if (item) { item.deleted = true; item.updatedAt = Date.now(); }
-            render(); cloudSync(false); 
-        }
+        function togglePacking(id) { const item = appState.packing.find(p => p.id === id); if (item) { item.checked = !item.checked; item.updatedAt = Date.now(); } render(); cloudSync(false); }
+        function addPacking() { const input = document.getElementById('new-pack-item'); if(!input.value.trim()) return; const now = Date.now(); appState.packing.push({ id: now, text: input.value.trim(), checked: false, updatedAt: now, deleted: false }); render(); cloudSync(false); }
+        function deletePacking(id) { const item = appState.packing.find(p => p.id === id); if (item) { item.deleted = true; item.updatedAt = Date.now(); } render(); cloudSync(false); }
 
         // --- 5. SOS 緊急救援 ---
         const SOS_PHRASES = [
@@ -1071,7 +1042,7 @@
                         
                         <div class="grid grid-cols-2 gap-3 mb-4">
                             <a href="tel:119" class="bg-white text-red-600 font-black py-3 rounded-xl flex justify-center items-center gap-2 shadow-md">
-                                <i data-lucide="phone" class="w-5 h-5"></i> 撥打 119 (救護車)
+                                <i data-lucide="phone" class="w-5 h-5"></i> 撥打 119 (救護)
                             </a>
                             <a href="tel:110" class="bg-white text-blue-600 font-black py-3 rounded-xl flex justify-center items-center gap-2 shadow-md">
                                 <i data-lucide="phone" class="w-5 h-5"></i> 撥打 110 (報警)
@@ -1097,7 +1068,6 @@
             `;
         }
 
-        // --- TTS 語音 ---
         function speak(text) {
             if (!window.speechSynthesis) return alert("瀏覽器不支援語音");
             window.speechSynthesis.cancel();
