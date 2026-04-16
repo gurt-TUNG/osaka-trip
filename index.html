@@ -53,7 +53,7 @@
     <header class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-50 pt-safe">
         <div class="max-w-md mx-auto flex justify-between items-center pt-2">
             <div>
-                <h1 class="text-xl font-bold">大阪親子 7 日遊0416</h1>
+                <h1 class="text-xl font-bold">大阪親子 7 日遊</h1>
                 <p class="text-xs text-blue-200" id="sync-status">2026/04/18 - 04/24 • 2大2小</p>
             </div>
             <div class="bg-blue-700 p-2 rounded-full shadow-inner cursor-pointer hover:bg-blue-800 transition-colors" onclick="cloudSync(true)">
@@ -84,6 +84,7 @@
         </div>
     </nav>
 
+    <!-- 資訊彈出視窗 -->
     <div id="modal-overlay" onclick="if(event.target === this) closeModal()">
         <div id="modal-content" class="relative">
             <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800 bg-gray-100 rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -92,6 +93,29 @@
         </div>
     </div>
 
+    <!-- 刪除確認彈窗 (防呆) -->
+    <div id="confirm-overlay" class="fixed inset-0 bg-black/60 z-[105] hidden flex-col justify-center items-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+            <h3 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i> 確認刪除</h3>
+            <p class="text-sm text-gray-600 mb-6">您確定要刪除這筆記帳嗎？此動作無法復原。</p>
+            <div class="flex gap-3">
+                <button onclick="cancelDelete()" class="flex-1 py-3 bg-gray-100 text-gray-700 rounded-xl font-bold hover:bg-gray-200">取消</button>
+                <button onclick="confirmDelete()" class="flex-1 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 shadow-md">確定刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通用提示彈窗 (取代系統 Alert) -->
+    <div id="alert-overlay" class="fixed inset-0 bg-black/60 z-[110] hidden flex-col justify-center items-center p-4" onclick="closeAlert()">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center" onclick="event.stopPropagation()">
+            <div id="alert-icon" class="mb-3 flex justify-center text-blue-500"></div>
+            <h3 id="alert-title" class="text-lg font-bold text-gray-800 mb-2"></h3>
+            <p id="alert-text" class="text-sm text-gray-600 mb-6"></p>
+            <button onclick="closeAlert()" class="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 shadow-md">我知道了</button>
+        </div>
+    </div>
+
+    <!-- 載入中動畫 -->
     <div id="loading-overlay">
         <div class="spinner mb-4"></div>
         <p id="loading-text" class="text-blue-700 font-bold tracking-wider">處理中...</p>
@@ -107,13 +131,13 @@
                 day: 1, date: "4/18 (六)", title: "神戶動物王國 ➡️ 道頓堀", intensity: 5, location: "Kobe Animal Kingdom", displayLoc: "神戶 -> 大阪市區",
                 desc: "09:00 抵達神戶機場。搭乘電車 5 分鐘直達「神戶動物王國」近距離看動物。下午搭車前往大阪難波，轉計程車回飯店放行李。傍晚輕裝前往道頓堀吃晚餐。",
                 meals: { b: "機上", l: "動物王國園區內", d: "道頓堀/心齋橋商圈" },
-                baseSpots: ["神戶機場 (UKB)", "神戶動物王國", "飯店 Check-in", "道頓堀/心齋橋", "🍣 藏壽司 (備案)", "🍜 神座拉麵 (備案)", "🥟 551蓬萊肉包 (解饞)"]
+                baseSpots: ["神戶機場 (UKB)", "神戶動物王國", "飯店 Check-in", "道頓堀/心齋橋", "🥩 千房大阪燒 (備案)", "🍜 神座拉麵 (備案)", "🐙 本家大章魚燒 (解饞)", "🥟 551蓬萊肉包 (解饞)"]
             },
             {
                 day: 2, date: "4/19 (日)", title: "天王寺動物園 ➡️ 新世界/阿倍野", intensity: 6, location: "Tsutenkaku", displayLoc: "天王寺 / 新世界",
                 desc: "早上體驗道地的日本喫茶店早餐！隨後前往天王寺看動物，出園後直達新世界老街吃串炸。傍晚前往阿倍野看無敵夕陽與夜景。",
                 meals: { b: "☕ Komeda珈琲店", l: "🍢 達摩串炸", d: "阿倍野周邊美食街" },
-                baseSpots: ["Komeda珈琲店 (天王寺)", "天王寺動物園", "新世界老街", "通天閣", "阿倍野 HARUKAS", "🥩 達摩串炸 (新世界)", "🍣 大起水產 (備案)"]
+                baseSpots: ["Komeda珈琲店 (天王寺)", "天王寺動物園", "新世界老街", "通天閣", "阿倍野 HARUKAS", "🥩 達摩串炸 (新世界)", "🥩 八重勝 串炸 (備案)", "🍣 大起水產 (備案)"]
             },
             {
                 day: 3, date: "4/20 (一)", title: "京都清水寺 ➡️ 老街", intensity: 7, location: "Kiyomizu-dera", displayLoc: "京都清水寺",
@@ -125,7 +149,7 @@
                 day: 4, date: "4/21 (二)", title: "🔥 環球影城 USJ (🌧️雨天)", intensity: 10, location: "Universal Studios Japan", displayLoc: "USJ 環球影城",
                 desc: "🌧️【雨天提醒】預報有雨，建議自備輕便雨衣。早上先在園外吃華麗的火山鬆餅躲雨補體力。入園後善用『環球奇境』室內設施，午餐安排室內主題餐廳。",
                 meals: { b: "🥞 Eggs 'n Things (USJ園外)", l: "🍄 奇諾比奧咖啡店 (室內躲雨)", d: "USJ園外商場餐廳" },
-                baseSpots: ["Eggs 'n Things (USJ)", "超級任天堂世界", "奇諾比奧咖啡店", "環球奇境", "🍣 藏壽司 (USJ園外)"]
+                baseSpots: ["Eggs 'n Things (USJ)", "超級任天堂世界", "奇諾比奧咖啡店", "環球奇境", "🍔 Hard Rock Cafe (USJ園外)", "🥩 風月 大阪燒 (USJ園外)"]
             },
             {
                 day: 5, date: "4/22 (三)", title: "任天堂官方店 ➡️ 梅田", intensity: 4, location: "Daimaru Umeda", displayLoc: "大阪梅田商圈",
@@ -168,10 +192,13 @@
             "星乃珈琲店": { desc: "復古日式喫茶店，招牌是超厚實的『窯烤舒芙蕾鬆餅』，環境舒適，非常適合雨天悠閒吃早餐。" },
             "北極星蛋包飯 (天保山)": { desc: "日本蛋包飯創始店！位於天保山室內美食街（浪花美食橫丁）內，完美躲雨的午餐首選。" },
             "黑門市場 (吃草莓/海鮮)": { desc: "大阪人的廚房！整條街都有遮雨棚，下雨也不怕。可以買又大又甜的草莓當早餐，大人吃現烤和牛。" },
-            // --- 新增備用美食介紹 ---
-            "🍣 藏壽司 (備案)": { desc: "平價連鎖迴轉壽司，吃五盤可以轉扭蛋，是小朋友的最愛！不想吃生食也有烏龍麵跟炸物可選。" },
-            "🍣 藏壽司 (USJ園外)": { desc: "位於環球影城外的 CityWalk 步行街。在園外想吃平價且適合小朋友的晚餐，這是極佳選擇。" },
-            "🍣 大起水產 (備案)": { desc: "食材新鮮的平價迴轉壽司，如果不想排隊等藏壽司，這家是在地人非常推薦的美味選擇。" },
+            // --- 備用美食介紹 ---
+            "🥩 千房大阪燒 (備案)": { desc: "大阪燒名店！師傅會在鐵板上展現美乃滋拉花絕技，口感蓬鬆，是用餐兼看秀的好選擇。" },
+            "🐙 本家大章魚燒 (解饞)": { desc: "道頓堀排隊名店，主打超大塊的章魚腳，醬汁濃郁，買一盒全家在河畔分食剛剛好。" },
+            "🥩 八重勝 串炸 (備案)": { desc: "新世界必吃串炸之一！麵衣帶有山藥的微甜，牛筋串與炸蝦是必點招牌，小朋友也會喜歡。" },
+            "🍔 Hard Rock Cafe (USJ園外)": { desc: "在 USJ 園外 CityWalk 上。美式巨無霸漢堡與歡樂的音樂氣氛，非常適合樂園玩完後大口吃肉。" },
+            "🥩 風月 大阪燒 (USJ園外)": { desc: "老字號鶴橋風月大阪燒！在 USJ 外圍也能吃到熱騰騰的鐵板美食，高麗菜清甜爽脆。" },
+            "🍣 大起水產 (備案)": { desc: "食材新鮮的平價迴轉壽司，如果不想排隊等過久，這家是在地人非常推薦的美味選擇。" },
             "🍜 神座拉麵 (備案)": { desc: "大阪人氣拉麵！以白菜熬煮的醬油湯頭非常清甜，有別於一般濃郁豚骨，特別適合給小朋友吃。" },
             "🍜 金龍拉麵 (備案)": { desc: "道頓堀標誌性的立體龍招牌，白飯、泡菜、韭菜免費無限續加，口味清爽適合全家。" },
             "🍜 一風堂 (備案)": { desc: "知名豚骨拉麵店，湯頭香醇但不死鹹，點一碗配上煎餃，是最安穩好吃的選擇。" },
@@ -187,6 +214,7 @@
             { id: 'shopping', icon: '🛍️', label: '購物', color: '#a855f7' },
             { id: 'transport', icon: '🚃', label: '交通', color: '#3b82f6' },
             { id: 'ticket', icon: '🎟️', label: '門票', color: '#ef4444' },
+            { id: 'toy', icon: '🧸', label: '玩具', color: '#ec4899' }, // 新增玩具分類
             { id: 'other', icon: '📦', label: '其他', color: '#9ca3af' }
         ];
 
@@ -243,6 +271,7 @@
                     e.formula = e.formula || String(e.jpy);
                     e.day = e.day || 1;
                 }
+                if (!e.currency) e.currency = 'JPY'; // 新增幣別支援
                 if (!e.updatedAt) e.updatedAt = e.id; 
                 if (e.deleted === undefined) e.deleted = false;
             });
@@ -289,12 +318,31 @@
         let randomPhrase = DAILY_PHRASES[0];
         let expandedSOS = null;
         let editingExpenseId = null; 
+        let pendingDeleteId = null; // 記錄準備要刪除的記帳 ID
 
         document.addEventListener('DOMContentLoaded', () => { 
             cyclePhrase(); 
             render(); 
             cloudSync(false); 
         });
+
+        // --- 全域提示框 (取代 Alert) ---
+        function showAlert(title, text, type = 'info') {
+            document.getElementById('alert-title').innerText = title;
+            document.getElementById('alert-text').innerText = text;
+            
+            let iconHtml = '<i data-lucide="info" class="w-12 h-12"></i>';
+            if (type === 'success') iconHtml = '<i data-lucide="check-circle" class="w-12 h-12 text-green-500"></i>';
+            if (type === 'error') iconHtml = '<i data-lucide="alert-triangle" class="w-12 h-12 text-red-500"></i>';
+            
+            document.getElementById('alert-icon').innerHTML = iconHtml;
+            lucide.createIcons();
+            document.getElementById('alert-overlay').style.display = 'flex';
+        }
+
+        function closeAlert() {
+            document.getElementById('alert-overlay').style.display = 'none';
+        }
 
         function showLoading(show, text="處理中...") {
             const overlay = document.getElementById('loading-overlay');
@@ -310,14 +358,14 @@
                 document.getElementById('sync-status').innerText = "已於 " + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}) + " 同步";
                 if(isManual) {
                     showLoading(false);
-                    alert("🎉 雲端雙向同步完成！\n資料已更新至最新狀態。");
+                    showAlert("同步成功", "資料已與雲端同步至最新狀態。", "success");
                 }
             } catch (e) {
                 console.log("同步失敗:", e);
                 document.getElementById('sync-status').innerText = "⚠️ 離線模式 (同步失敗)";
                 if(isManual) {
                     showLoading(false);
-                    alert("❌ 同步失敗，請檢查網路連線或 API 網址是否正確。");
+                    showAlert("同步失敗", "請檢查網路連線或 API 網址是否正確。", "error");
                 }
             }
             render();
@@ -551,7 +599,6 @@
             container.innerHTML = html;
         }
 
-        // 修改彈出視窗：移除圖片區域，專注純文字介紹
         function showSpotInfo(spotName) {
             const info = SPOT_DETAILS[spotName];
             if(!info) return;
@@ -585,9 +632,10 @@
             cloudSync(false);
         }
 
+        // --- 記帳工具渲染 ---
         function renderTools(container) {
             let totalTWD = 0;
-            let stats = { food:0, shopping:0, transport:0, ticket:0, other:0 };
+            let stats = { food:0, shopping:0, transport:0, ticket:0, toy:0, other:0 };
             
             const activeExpenses = appState.expenses.filter(e => !e.deleted);
 
@@ -597,8 +645,10 @@
             });
 
             const expenseList = activeExpenses.length === 0 ? '<p class="text-center text-gray-400 text-xs py-6">尚未有記錄</p>' : activeExpenses.map(item => {
-                const catObj = EXPENSE_CATEGORIES.find(c => c.id === item.catId) || EXPENSE_CATEGORIES[4];
+                const catObj = EXPENSE_CATEGORIES.find(c => c.id === item.catId) || EXPENSE_CATEGORIES[5];
                 const isEditing = editingExpenseId === item.id;
+                const formulaDisplay = item.currency === 'TWD' ? `NT$ ${item.formula}` : `¥ ${item.formula || item.jpy}`;
+                const dayLabel = item.day === 0 ? '行前' : `Day ${item.day}`;
                 
                 return `
                 <div class="flex justify-between items-center p-3 border-b border-gray-100 last:border-0 ${isEditing ? 'bg-yellow-50' : 'hover:bg-gray-50'} transition-colors">
@@ -606,7 +656,7 @@
                         <div class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg shadow-sm">${catObj.icon}</div>
                         <div class="flex flex-col">
                             <span class="text-sm font-bold ${isEditing ? 'text-yellow-800' : 'text-gray-800'}">${item.desc}</span>
-                            <span class="text-[10px] text-gray-400 font-mono">Day ${item.day} • ¥${item.formula || item.jpy}</span>
+                            <span class="text-[10px] text-gray-400 font-mono">${dayLabel} • ${formulaDisplay}</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -615,24 +665,26 @@
                             <span class="text-[10px] text-gray-400 block">¥ ${item.jpy.toLocaleString()}</span>
                         </div>
                         <button onclick="editExpense(${item.id})" class="text-gray-400 hover:text-blue-500 p-1.5"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                        <button onclick="deleteExpense(${item.id})" class="text-red-300 hover:text-red-500 p-1.5"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        <button onclick="requestDeleteExpense(${item.id})" class="text-red-300 hover:text-red-500 p-1.5"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 </div>
                 `;
             }).join('');
 
-            let formVals = { day: 1, catId: 'food', desc: '', formula: '' };
+            let formVals = { day: 1, catId: 'food', currency: 'JPY', desc: '', formula: '' };
             let btnText = "新增", btnColor = "bg-blue-600 hover:bg-blue-700";
             if (editingExpenseId) {
                 const exp = appState.expenses.find(e => e.id === editingExpenseId);
                 if (exp) {
-                    formVals = { day: exp.day, catId: exp.catId, desc: exp.desc, formula: exp.formula || exp.jpy };
+                    formVals = { day: exp.day, catId: exp.catId, currency: exp.currency || 'JPY', desc: exp.desc, formula: exp.formula || exp.jpy };
                     btnText = "完成修改"; btnColor = "bg-green-600 hover:bg-green-700 shadow-md shadow-green-200";
                 }
             }
 
             const catOptions = EXPENSE_CATEGORIES.map(c => `<option value="${c.id}" ${c.id===formVals.catId?'selected':''}>${c.icon} ${c.label}</option>`).join('');
-            const dayOptions = [1,2,3,4,5,6,7].map(d => `<option value="${d}" ${d===formVals.day?'selected':''}>Day ${d}</option>`).join('');
+            
+            // 產生包含 Day 0 的下拉選單
+            const dayOptions = [0,1,2,3,4,5,6,7].map(d => `<option value="${d}" ${d===formVals.day?'selected':''}>Day ${d}${d===0?' (行前)':''}</option>`).join('');
 
             let conicStops = [];
             let currentPct = 0;
@@ -705,20 +757,28 @@
                         
                         <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 mb-4 shadow-sm ${editingExpenseId ? 'ring-2 ring-green-400' : ''}">
                             ${editingExpenseId ? '<div class="text-xs font-bold text-green-600 mb-2 flex items-center gap-1"><i data-lucide="edit-3" class="w-3 h-3"></i> 正在修改資料...</div>' : ''}
+                            
                             <div class="flex gap-2 mb-2">
                                 <select id="ex-day" class="w-1/3 p-2.5 border border-gray-300 rounded-lg text-sm bg-white font-bold text-gray-700 shadow-sm">${dayOptions}</select>
-                                <select id="ex-cat" class="w-2/3 p-2.5 border border-gray-300 rounded-lg text-sm bg-white shadow-sm">${catOptions}</select>
+                                <select id="ex-cat" class="w-1/3 p-2.5 border border-gray-300 rounded-lg text-sm bg-white shadow-sm">${catOptions}</select>
+                                <select id="ex-currency" class="w-1/3 p-2.5 border border-gray-300 rounded-lg text-sm bg-white shadow-sm font-bold text-blue-600" onchange="previewCalc()">
+                                    <option value="JPY" ${formVals.currency==='TWD'?'':'selected'}>¥ 日幣</option>
+                                    <option value="TWD" ${formVals.currency==='TWD'?'selected':''}>$ 台幣</option>
+                                </select>
                             </div>
-                            <input type="text" id="ex-desc" value="${formVals.desc}" placeholder="輸入細項 (如: 章魚燒)" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm mb-2 shadow-inner">
+                            
+                            <input type="text" id="ex-desc" value="${formVals.desc}" placeholder="輸入細項 (如: 機票 或 章魚燒)" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm mb-2 shadow-inner">
+                            
                             <div class="flex gap-2">
                                 <div class="relative flex-1">
-                                    <span class="absolute left-3 top-2.5 text-gray-400 font-bold">¥</span>
-                                    <input type="text" id="ex-formula" value="${formVals.formula}" onkeyup="previewCalc()" placeholder="算式支援空格: 200 50 145" class="w-full pl-8 p-2.5 border border-gray-300 rounded-lg text-sm font-mono shadow-inner bg-white">
+                                    <span class="absolute left-3 top-2.5 text-gray-400 font-bold">#</span>
+                                    <input type="text" id="ex-formula" value="${formVals.formula}" onkeyup="previewCalc()" placeholder="算式支援空格: 200 50" class="w-full pl-8 p-2.5 border border-gray-300 rounded-lg text-sm font-mono shadow-inner bg-white">
                                     <span id="ex-preview" class="absolute right-3 top-2.5 text-blue-600 font-bold text-sm"></span>
                                 </div>
                                 <button onclick="saveExpense()" class="${btnColor} text-white px-4 rounded-lg text-sm font-bold transition-all flex items-center justify-center">${btnText}</button>
                             </div>
-                            ${editingExpenseId ? '<button onclick="cancelEdit()" class="w-full mt-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 font-medium">取消修改</button>' : `<div class="text-[10px] text-gray-400 mt-1.5 text-right">匯率: ${EXCHANGE_RATE} (自動算台幣)</div>`}
+                            
+                            ${editingExpenseId ? '<button onclick="cancelEdit()" class="w-full mt-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 font-medium">取消修改</button>' : `<div class="text-[10px] text-gray-400 mt-1.5 text-right">切換幣別將自動為您轉換，日幣匯率估: ${EXCHANGE_RATE}</div>`}
                         </div>
 
                         <div class="flex p-1 bg-gray-100 rounded-xl mb-3 shadow-inner">
@@ -760,15 +820,22 @@
             if(editingExpenseId) previewCalc(); 
         }
 
+        // 記帳運算預覽 (支援台幣/日幣切換)
         function previewCalc() {
             const input = document.getElementById('ex-formula').value;
+            const currency = document.getElementById('ex-currency').value;
             const withPlus = input.replace(/\s+/g, '+'); 
             const safeInput = withPlus.replace(/[^0-9+\-*/().]/g, '');
             try {
                 if(safeInput && !safeInput.endsWith('+') && !safeInput.endsWith('-')) {
-                    const jpy = Math.floor(eval(safeInput));
-                    const twd = Math.round(jpy * EXCHANGE_RATE);
-                    document.getElementById('ex-preview').innerText = isNaN(twd) ? '' : `NT$ ${twd}`;
+                    const amount = eval(safeInput);
+                    if (currency === 'JPY') {
+                        const twd = Math.round(amount * EXCHANGE_RATE);
+                        document.getElementById('ex-preview').innerText = isNaN(twd) ? '' : `NT$ ${twd}`;
+                    } else {
+                        const jpy = Math.floor(amount / EXCHANGE_RATE);
+                        document.getElementById('ex-preview').innerText = isNaN(jpy) ? '' : `¥ ${jpy.toLocaleString()}`;
+                    }
                 } else { document.getElementById('ex-preview').innerText = ''; }
             } catch(e) { document.getElementById('ex-preview').innerText = ''; }
         }
@@ -787,24 +854,36 @@
         function saveExpense() {
             const day = parseInt(document.getElementById('ex-day').value);
             const catId = document.getElementById('ex-cat').value;
+            const currency = document.getElementById('ex-currency').value;
             const desc = document.getElementById('ex-desc').value.trim() || '未命名項目';
             const rawFormula = document.getElementById('ex-formula').value;
             const withPlus = rawFormula.replace(/\s+/g, '+');
             const formula = withPlus.replace(/[^0-9+\-*/().]/g, '');
             
-            if(!formula) return alert("請輸入金額或算式！");
+            if(!formula) {
+                showAlert("輸入不完整", "請輸入金額或算式！", "info");
+                return;
+            }
             
             try {
-                const jpy = Math.floor(eval(formula));
-                if(isNaN(jpy) || jpy <= 0) throw new Error();
-                const twd = Math.round(jpy * EXCHANGE_RATE);
+                const amount = eval(formula);
+                if(isNaN(amount) || amount <= 0) throw new Error();
+                
+                let jpy, twd;
+                if (currency === 'JPY') {
+                    jpy = Math.floor(amount);
+                    twd = Math.round(jpy * EXCHANGE_RATE);
+                } else {
+                    twd = Math.round(amount);
+                    jpy = Math.floor(twd / EXCHANGE_RATE);
+                }
                 
                 if (editingExpenseId) {
                     const index = appState.expenses.findIndex(e => e.id === editingExpenseId);
                     if (index !== -1) {
                         appState.expenses[index] = {
                             ...appState.expenses[index],
-                            day, catId, desc, formula: rawFormula, jpy, twd,
+                            day, catId, currency, desc, formula: rawFormula, jpy, twd,
                             updatedAt: Date.now() 
                         };
                     }
@@ -813,7 +892,7 @@
                     const now = Date.now();
                     appState.expenses.unshift({
                         id: now, updatedAt: now, deleted: false,
-                        day, catId, desc, formula: rawFormula, jpy, twd,
+                        day, catId, currency, desc, formula: rawFormula, jpy, twd,
                         time: new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'})
                     });
                 }
@@ -821,27 +900,48 @@
                 render();
                 cloudSync(false);
             } catch(e) {
-                alert("算式錯誤，請檢查輸入！");
+                showAlert("格式錯誤", "算式有誤，請檢查輸入的內容！", "error");
             }
         }
 
-        function deleteExpense(id) { 
-            const exp = appState.expenses.find(e => e.id === id);
-            if (exp) {
-                exp.deleted = true;
-                exp.updatedAt = Date.now();
-                render(); 
-                cloudSync(false); 
+        // 觸發刪除確認彈窗
+        function requestDeleteExpense(id) {
+            pendingDeleteId = id;
+            document.getElementById('confirm-overlay').style.display = 'flex';
+        }
+
+        // 取消刪除
+        function cancelDelete() {
+            pendingDeleteId = null;
+            document.getElementById('confirm-overlay').style.display = 'none';
+        }
+
+        // 確定刪除
+        function confirmDelete() {
+            if (pendingDeleteId) {
+                const exp = appState.expenses.find(e => e.id === pendingDeleteId);
+                if (exp) {
+                    exp.deleted = true;
+                    exp.updatedAt = Date.now();
+                    render(); 
+                    cloudSync(false); 
+                }
+                pendingDeleteId = null;
             }
+            document.getElementById('confirm-overlay').style.display = 'none';
         }
         
         function downloadCSV() {
             const activeExpenses = appState.expenses.filter(e => !e.deleted);
-            if(activeExpenses.length === 0) return alert("沒有資料可匯出！");
+            if(activeExpenses.length === 0) {
+                showAlert("提示", "目前沒有資料可以匯出喔！", "info");
+                return;
+            }
             let csvContent = "data:text/csv;charset=utf-8,\uFEFF天數,分類,項目,日幣,台幣,時間\n";
             activeExpenses.forEach(e => { 
                 const catName = EXPENSE_CATEGORIES.find(c=>c.id===e.catId)?.label || '其他';
-                csvContent += `Day ${e.day},${catName},${e.desc},${e.jpy},${e.twd},${e.time}\n`; 
+                const dayStr = e.day === 0 ? '行前' : `Day ${e.day}`;
+                csvContent += `${dayStr},${catName},${e.desc},${e.jpy},${e.twd},${e.time}\n`; 
             });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "大阪旅遊記帳.csv"); link.click();
@@ -1069,7 +1169,10 @@
         }
 
         function speak(text) {
-            if (!window.speechSynthesis) return alert("瀏覽器不支援語音");
+            if (!window.speechSynthesis) {
+                showAlert("語音錯誤", "您的瀏覽器不支援語音功能", "error");
+                return;
+            }
             window.speechSynthesis.cancel();
             const u = new SpeechSynthesisUtterance(text);
             u.lang = 'ja-JP'; u.rate = 0.85; u.pitch = 1.1;
