@@ -36,6 +36,18 @@
             max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
 
+        #confirm-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 105;
+            display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
+        }
+
+        #alert-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 110;
+            display: none; flex-direction: column; justify-content: center; align-items: center; padding: 20px;
+        }
+
         #loading-overlay {
             position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(255,255,255,0.8); z-index: 999;
@@ -53,7 +65,7 @@
     <header class="bg-blue-600 text-white p-4 shadow-lg sticky top-0 z-50 pt-safe">
         <div class="max-w-md mx-auto flex justify-between items-center pt-2">
             <div>
-                <h1 class="text-xl font-bold">大阪親子 7 日遊0419</h1>
+                <h1 class="text-xl font-bold">大阪親子 7 日遊</h1>
                 <p class="text-xs text-blue-200" id="sync-status">2026/04/18 - 04/24 • 2大2小</p>
             </div>
             <div class="bg-blue-700 p-2 rounded-full shadow-inner cursor-pointer hover:bg-blue-800 transition-colors" onclick="cloudSync(true)">
@@ -84,6 +96,7 @@
         </div>
     </nav>
 
+    <!-- 景點資訊彈出視窗 -->
     <div id="modal-overlay" onclick="if(event.target === this) closeModal()">
         <div id="modal-content" class="relative">
             <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-800 bg-gray-100 rounded-full p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -92,8 +105,9 @@
         </div>
     </div>
 
-    <div id="confirm-overlay" class="fixed inset-0 bg-black/60 z-[105] hidden flex-col justify-center items-center p-4">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl">
+    <!-- 刪除確認彈窗 -->
+    <div id="confirm-overlay" onclick="cancelDelete()">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onclick="event.stopPropagation()">
             <h3 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i> 確認刪除</h3>
             <p class="text-sm text-gray-600 mb-6">您確定要刪除這筆記帳嗎？此動作無法復原。</p>
             <div class="flex gap-3">
@@ -103,7 +117,8 @@
         </div>
     </div>
 
-    <div id="alert-overlay" class="fixed inset-0 bg-black/60 z-[110] hidden flex-col justify-center items-center p-4" onclick="closeAlert()">
+    <!-- 通用提示彈窗 -->
+    <div id="alert-overlay" onclick="closeAlert()">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl text-center" onclick="event.stopPropagation()">
             <div id="alert-icon" class="mb-3 flex justify-center text-blue-500"></div>
             <h3 id="alert-title" class="text-lg font-bold text-gray-800 mb-2"></h3>
@@ -112,6 +127,7 @@
         </div>
     </div>
 
+    <!-- 載入中動畫 -->
     <div id="loading-overlay">
         <div class="spinner mb-4"></div>
         <p id="loading-text" class="text-blue-700 font-bold tracking-wider">處理中...</p>
@@ -122,69 +138,78 @@
         const EXCHANGE_RATE = 0.21;
         const API_URL = "https://script.google.com/macros/s/AKfycbwDmOWroNSekoK1ekr0mQDgCxlXY7LbQbWue_67hGmJNgq-2ZQ6N60oFUjTWn5wGaOD2w/exec";
         
-        // --- 最新旅遊行程資料庫 (Day1, Day2 完美修正) ---
+        // --- 旅遊行程資料庫 (加入 fullDate 以利程式偵測時間) ---
         const ITINERARY_DATA = [
             {
-                day: 1, date: "4/18 (六)", title: "神戶動物王國 ➡️ 抵達大阪", intensity: 4, location: "Kobe Animal Kingdom", displayLoc: "神戶 -> 飯店",
-                desc: "09:00 抵達神戶機場。搭乘電車 5 分鐘直達「神戶動物王國」放電。下午搭車前往大阪難波，轉計程車回西成區飯店 Check-in。傍晚在飯店周邊輕鬆休息。",
+                day: 1, fullDate: "2026/04/18", date: "4/18 (六)", title: "神戶動物王國 ➡️ 抵達大阪", intensity: 4, location: "Kobe Animal Kingdom", displayLoc: "神戶 -> 飯店",
+                desc: "09:00 抵達神戶機場。搭乘電車直達「神戶動物王國」放電。下午前往大阪難波，轉計程車回飯店 Check-in。傍晚在飯店周邊輕鬆休息。",
                 meals: { b: "機上", l: "動物王國園區內", d: "飯店周邊餐廳/超市" },
                 baseSpots: ["神戶機場 (UKB)", "神戶動物王國", "飯店 Check-in", "飯店周邊吃晚餐/休息", "🥟 551蓬萊肉包 (解饞)"]
             },
             {
-                day: 2, date: "4/19 (日)", title: "大阪城/獅子神 ➡️ 道頓堀", intensity: 6, location: "Osaka Castle", displayLoc: "今宮 / 難波",
+                day: 2, fullDate: "2026/04/19", date: "4/19 (日)", title: "大阪城/獅子神 ➡️ 道頓堀", intensity: 6, location: "Osaka Castle", displayLoc: "今宮 / 難波",
                 desc: "從今宮站搭乘 JR 直達大阪城公園！中午前往難波用餐，下午參拜巨大獅子頭神社，隨後前往道頓堀商圈搭遊船與大啖美食。",
                 meals: { b: "☕ Komeda珈琲店", l: "🥩 千房大阪燒 (或拉麵)", d: "🍣 道頓堀周邊美食" },
-                baseSpots: ["Komeda珈琲店 (備案)", "大阪城 (搭小火車/遊船)", "難波八阪神社 (獅子頭)", "道頓堀水上觀光船", "固力果跑跑人看板", "心齋橋筋商店街", "🥩 千房大阪燒 (備案)", "🍜 神座拉麵 (備案)", "🍣 大起水產 (備案)", "🐙 本家大章魚燒 (解饞)"]
+                baseSpots: ["Komeda珈琲店 (備案)", "大阪城 (搭小火車/遊船)", "難波八阪神社 (獅子頭)", "道頓堀水上觀光船", "固力果跑跑人看板", "心齋橋筋商店街", "🥩 千房大阪燒 (備案)", "🍜 神座拉麵 (備案)", "🐙 本家大章魚燒 (解饞)"]
             },
             {
-                day: 3, date: "4/20 (一)", title: "京都清水寺 ➡️ 老街", intensity: 7, location: "Kiyomizu-dera", displayLoc: "京都清水寺",
-                desc: "早上先去難波買現烤的老爺爺起司蛋糕當美味早餐！隨後搭車前往京都。清水寺及周邊老街漫步，體驗傳統日本風情。",
-                meals: { b: "🍰 老爺爺起司蛋糕", l: "🍜 京都湯豆腐/烏龍麵", d: "大阪市區餐廳" },
-                baseSpots: ["老爺爺起司蛋糕 (難波)", "清水寺", "二年坂 / 三年坂", "八坂神社", "🍜 金龍拉麵 (備案)"]
+                // 🔥 Day 3 完美大翻新：通天閣、新世界、天王寺瘋狂血拼！
+                day: 3, fullDate: "2026/04/20", date: "4/20 (一)", title: "通天閣/新世界 ➡️ 天王寺購物", intensity: 5, location: "Tsutenkaku", displayLoc: "新世界 / 天王寺",
+                desc: "今天走輕鬆吃喝採買路線！上午前往新世界老街看通天閣、吃串炸。下午轉戰天王寺商圈，在 MEGA唐吉訶德、Bic Camera 及各大藥妝店買齊伴手禮與電器！",
+                meals: { b: "🍰 老爺爺起司蛋糕", l: "🍢 達摩/八重勝串炸", d: "天王寺百貨美食街" },
+                baseSpots: ["老爺爺起司蛋糕 (難波)", "通天閣", "新世界老街", "MEGA唐吉訶德 (新世界店)", "Bic Camera (天王寺店)", "天王寺商圈 (藥妝/百貨)", "🥩 達摩串炸 (新世界)", "🥩 八重勝 串炸 (備案)", "🍣 大起水產 (備案)", "🍜 自由軒咖哩飯 (備案)"]
             },
             {
-                day: 4, date: "4/21 (二)", title: "🔥 環球影城 USJ (🌧️雨天)", intensity: 10, location: "Universal Studios Japan", displayLoc: "USJ 環球影城",
+                day: 4, fullDate: "2026/04/21", date: "4/21 (二)", title: "🔥 環球影城 USJ (🌧️雨天)", intensity: 10, location: "Universal Studios Japan", displayLoc: "USJ 環球影城",
                 desc: "🌧️【雨天提醒】預報有雨，建議自備輕便雨衣。早上先在園外吃華麗的火山鬆餅躲雨補體力。入園後善用『環球奇境』室內設施，午餐安排室內主題餐廳。",
                 meals: { b: "🥞 Eggs 'n Things (USJ園外)", l: "🍄 奇諾比奧咖啡店 (室內躲雨)", d: "USJ園外商場餐廳" },
                 baseSpots: ["Eggs 'n Things (USJ)", "超級任天堂世界", "奇諾比奧咖啡店", "環球奇境", "🍔 Hard Rock Cafe (USJ園外)", "🥩 風月 大阪燒 (USJ園外)"]
             },
             {
-                day: 5, date: "4/22 (三)", title: "任天堂官方店 ➡️ 梅田", intensity: 4, location: "Daimaru Umeda", displayLoc: "大阪梅田商圈",
+                day: 5, fullDate: "2026/04/22", date: "4/22 (三)", title: "任天堂官方店 ➡️ 梅田", intensity: 4, location: "Daimaru Umeda", displayLoc: "大阪梅田商圈",
                 desc: "USJ 隔日體力恢復。早上享用世界第一好吃的 Bills 鬆餅！主攻大丸梅田 13F 的任天堂與寶可夢中心，午餐吃知名紐約漢堡。",
                 meals: { b: "🥞 Bills 鬆餅 (大阪梅田)", l: "🍔 Shake Shack 漢堡", d: "梅田商圈餐廳" },
                 baseSpots: ["Bills 鬆餅 (梅田)", "Nintendo OSAKA", "寶可夢中心", "Shake Shack (梅田)", "🥩 敘敘苑燒肉 (備案)", "🍜 一風堂 (備案)"]
             },
             {
-                day: 6, date: "4/23 (四)", title: "海遊館 ➡️ 天保山 (🌧️雨天)", intensity: 6, location: "Osaka Aquarium Kaiyukan", displayLoc: "大阪港灣區",
+                day: 6, fullDate: "2026/04/23", date: "4/23 (四)", title: "海遊館 ➡️ 天保山 (🌧️雨天)", intensity: 6, location: "Osaka Aquarium Kaiyukan", displayLoc: "大阪港灣區",
                 desc: "🌧️【雨天提醒】今天行程完美避雨！早上先在室內吃厚鬆餅，海遊館與天保山美食街皆為全室內。摩天輪視風雨狀況決定是否搭乘。",
                 meals: { b: "☕ 星乃珈琲店 (舒芙蕾鬆餅)", l: "🍳 北極星蛋包飯 (天保山室內)", d: "市區餐廳" },
-                baseSpots: ["星乃珈琲店", "海遊館 (鯨鯊)", "北極星蛋包飯 (天保山)", "天保山摩天輪", "🍜 自由軒咖哩飯 (備案)"]
+                baseSpots: ["星乃珈琲店", "海遊館 (鯨鯊)", "北極星蛋包飯 (天保山)", "天保山摩天輪", "🍜 金龍拉麵 (備案)"]
             },
             {
-                day: 7, date: "4/24 (五)", title: "黑門市場 ➡️ 臨空城 (🌧️雨天)", intensity: 5, location: "Rinku Premium Outlets", displayLoc: "市區 / 關西機場",
+                day: 7, fullDate: "2026/04/24", date: "4/24 (五)", title: "黑門市場 ➡️ 臨空城 (🌧️雨天)", intensity: 5, location: "Rinku Premium Outlets", displayLoc: "市區 / 關西機場",
                 desc: "🌧️【雨天提醒】早上前往有頂棚遮蔽的黑門市場大啖草莓與海鮮！下午前往臨空城 Outlet (半室內需撐傘) 最後採購。預計 18:30 抵達機場。",
                 meals: { b: "🍓 黑門市場 (草莓/和牛串)", l: "🛍️ Outlet 美食街", d: "關西機場餐廳" },
                 baseSpots: ["黑門市場 (吃草莓/海鮮)", "🥩 國產牛燒肉 (黑門備案)", "臨空城 Outlet", "關西機場"]
             }
         ];
 
+        // --- 景點介紹資料庫 ---
         const SPOT_DETAILS = {
+            "飯店 Check-in": { desc: "辦理入住手續，放下沉重的行李，讓全家人稍微休息一下恢復體力。" },
+            "飯店周邊吃晚餐/休息": { desc: "第一天舟車勞頓，建議在飯店附近找間順眼的餐廳或居酒屋吃晚餐，早點休息充電。" },
             "神戶動物王國": { desc: "關西超強親子動物園！可以近距離摸水豚、餵袋鼠，室內場地不怕下雨，非常適合帶小朋友。" },
             "大阪城 (搭小火車/遊船)": { desc: "大阪必訪地標！強烈建議搭乘園區內的「路面小火車」或護城河的「御座船」，讓小朋友輕鬆遊覽不費力。" },
             "難波八阪神社 (獅子頭)": { desc: "隱藏在市區的奇特神社，高達 12 公尺的超巨大獅子頭舞台非常有震撼力，象徵吃掉厄運，是超棒的拍照點！" },
-            "道頓堀水上觀光船": { desc: "持大阪周遊卡可免費搭乘（需先換票）。約 20 分鐘的航程，可以從水上欣賞道頓堀的熱鬧招牌，小孩會覺得很有趣。" },
+            "道頓堀水上觀光船": { desc: "持大阪周遊卡可免費搭乘。約 20 分鐘的航程，可以從水上欣賞道頓堀的熱鬧招牌，小孩會覺得很有趣。" },
             "固力果跑跑人看板": { desc: "大阪最具代表性的打卡地標，位於戎橋旁。晚上點燈後非常漂亮，適合全家合照留念。" },
             "心齋橋筋商店街": { desc: "長達 600 公尺的商店街，全程有遮雨棚。裡面有藥妝店、服飾店與 Disney Store，非常熱鬧。" },
-            "道頓堀/心齋橋": { desc: "大阪最熱鬧的美食購物商圈。著名的巨大立體招牌非常吸引小朋友。人潮擁擠，請牽好小朋友。" },
-            "阿倍野 HARUKAS": { desc: "日本最高的摩天大樓之一，位於天王寺站旁。觀景台(需購票)可以俯瞰整個大阪，夕陽與夜景極美。" },
-            "清水寺": { desc: "京都著名木造寺廟。前往寺廟有上坡路，建議慢慢走，沿途可逛伴手禮店。" },
+            
+            // --- Day 3 新增景點 ---
+            "通天閣": { desc: "大阪的復古地標觀景塔，塔下有超大型溜滑梯 (TOWER SLIDER)，周邊充滿濃濃的昭和風情。" },
+            "新世界老街": { desc: "誇張華麗的招牌街道，是吃串炸的聖地，隨便找間順眼的店進去品嚐大阪美味。" },
+            "MEGA唐吉訶德 (新世界店)": { desc: "超大型旗艦店！走道寬敞適合推嬰兒車，商品齊全，從零食、伴手禮到藥妝一應俱全，是掃貨的最佳地點。" },
+            "Bic Camera (天王寺店)": { desc: "位於阿倍野 Q's Mall 內，買電器、玩具、遊戲機超方便，且商場對親子極度友善，有兒童專屬區。" },
+            "天王寺商圈 (藥妝/百貨)": { desc: "周邊有 Q's Mall、MIO 等百貨，藥妝店與服飾店密集，人潮比難波少，逛起來更舒服、好買。" },
+
             "超級任天堂世界": { desc: "USJ最受歡迎園區！建議買「能量手環」敲金幣。（注意：瑪利歐賽車需滿107cm）" },
             "Nintendo OSAKA": { desc: "大丸梅田13樓的任天堂官方店！販售獨家周邊，旁邊是寶可夢中心，小朋友的天堂。" },
             "海遊館 (鯨鯊)": { desc: "世界最大級水族館之一。「螺旋狀緩坡」設計不需爬樓梯，對家庭極度友善。" },
             "關西機場": { desc: "20:55 航班，建議 18:30 前抵達辦理報到與托運。" },
             
             // --- 餐飲介紹 ---
-            "Komeda珈琲店 (備案)": { desc: "名古屋發跡的知名咖啡店，早上點一杯飲料就免費送烤吐司與水煮蛋，是絕佳的日本道地早餐體驗！" },
+            "Komeda珈琲店 (備案)": { desc: "知名咖啡店，早上點一杯飲料就免費送烤吐司與水煮蛋，絕佳的日本道地早餐體驗！" },
             "老爺爺起司蛋糕 (難波)": { desc: "大阪必吃排隊名店！剛出爐會搖晃的起司蛋糕，入口即化，買一整個全家當早餐吃超幸福。" },
             "Eggs 'n Things (USJ)": { desc: "位於環球影城外圍步行街。招牌是超浮誇的鮮奶油火山鬆餅，下雨天可以先來吃早餐躲雨兼補充體力！" },
             "奇諾比奧咖啡店": { desc: "任天堂世界內最熱門的主題餐廳！有蘑菇造型漢堡與提拉米蘇，是下雨天最好的室內用餐點。" },
@@ -193,8 +218,6 @@
             "星乃珈琲店": { desc: "復古日式喫茶店，招牌是超厚實的『窯烤舒芙蕾鬆餅』，環境舒適，非常適合雨天悠閒吃早餐。" },
             "北極星蛋包飯 (天保山)": { desc: "日本蛋包飯創始店！位於天保山室內美食街（浪花美食橫丁）內，完美躲雨的午餐首選。" },
             "黑門市場 (吃草莓/海鮮)": { desc: "大阪人的廚房！整條街都有遮雨棚，下雨也不怕。可以買又大又甜的草莓當早餐，大人吃現烤和牛。" },
-            
-            // --- 備用美食介紹 ---
             "🥩 千房大阪燒 (備案)": { desc: "大阪燒名店！師傅會在鐵板上展現美乃滋拉花絕技，口感蓬鬆，是用餐兼看秀的好選擇。" },
             "🐙 本家大章魚燒 (解饞)": { desc: "道頓堀排隊名店，主打超大塊的章魚腳，醬汁濃郁，買一盒全家在河畔分食剛剛好。" },
             "🍔 Hard Rock Cafe (USJ園外)": { desc: "在 USJ 園外 CityWalk 上。美式巨無霸漢堡與歡樂的音樂氣氛，非常適合樂園玩完後大口吃肉。" },
@@ -203,6 +226,8 @@
             "🍜 神座拉麵 (備案)": { desc: "大阪人氣拉麵！以白菜熬煮的醬油湯頭非常清甜，有別於一般濃郁豚骨，特別適合給小朋友吃。" },
             "🍜 金龍拉麵 (備案)": { desc: "道頓堀標誌性的立體龍招牌，白飯、泡菜、韭菜免費無限續加，口味清爽適合全家。" },
             "🍜 一風堂 (備案)": { desc: "知名豚骨拉麵店，湯頭香醇但不死鹹，點一碗配上煎餃，是最安穩好吃的選擇。" },
+            "🥩 達摩串炸 (新世界)": { desc: "大阪最經典的串炸老店，生氣老闆招牌是打卡必備。麵衣薄脆，推薦炸起司、炸鵪鶉蛋。" },
+            "🥩 八重勝 串炸 (備案)": { desc: "新世界必吃串炸之一！麵衣帶有山藥的微甜，牛筋串與炸蝦是必點招牌，小朋友也會喜歡。" },
             "🥩 敘敘苑燒肉 (備案)": { desc: "想犒賞自己一頓好的？日本頂級高級燒肉連鎖店，服務極佳，中午的商業午餐套餐非常划算！" },
             "🥩 國產牛燒肉 (黑門備案)": { desc: "高品質的日本國產牛吃到飽！適合在黑門市場逛完後，想大口吃肉補充體力的完美備案。" },
             "🥟 551蓬萊肉包 (解饞)": { desc: "關西限定的靈魂美食！熱騰騰的豬肉包子香氣四溢，非常適合當作逛街時的解饞小點心。" },
@@ -214,7 +239,7 @@
             { id: 'shopping', icon: '🛍️', label: '購物', color: '#a855f7' },
             { id: 'transport', icon: '🚃', label: '交通', color: '#3b82f6' },
             { id: 'ticket', icon: '🎟️', label: '門票', color: '#ef4444' },
-            { id: 'toy', icon: '🧸', label: '玩具', color: '#ec4899' }, // 新增玩具分類
+            { id: 'toy', icon: '🧸', label: '玩具', color: '#ec4899' }, 
             { id: 'other', icon: '📦', label: '其他', color: '#9ca3af' }
         ];
 
@@ -271,7 +296,7 @@
                     e.formula = e.formula || String(e.jpy);
                     e.day = e.day || 1;
                 }
-                if (!e.currency) e.currency = 'JPY'; // 新增幣別支援
+                if (!e.currency) e.currency = 'JPY'; 
                 if (!e.updatedAt) e.updatedAt = e.id; 
                 if (e.deleted === undefined) e.deleted = false;
             });
@@ -297,7 +322,8 @@
                 { id: 5, text: "兒童輕便雨衣", checked: false, updatedAt: Date.now(), deleted: false },
                 { id: 6, text: "常用藥品 (退燒/腸胃)", checked: false, updatedAt: Date.now(), deleted: false }
             ],
-            customSpots: {}, completedSpots: {}, hiddenDays: {}
+            customSpots: {}, completedSpots: {}, hiddenDays: {},
+            autoHiddenProcessed: false // 紀錄是否已經執行過自動隱藏
         };
 
         let appState = JSON.parse(localStorage.getItem('osaka_app_state')) || DEFAULT_STATE;
@@ -309,24 +335,56 @@
         if(!appState.customSpots) appState.customSpots = {};
         if(!appState.completedSpots) appState.completedSpots = {};
         if(!appState.hiddenDays) appState.hiddenDays = {};
+        if(appState.autoHiddenProcessed === undefined) appState.autoHiddenProcessed = false;
 
         function saveState() { localStorage.setItem('osaka_app_state', JSON.stringify(appState)); }
 
         let currentTab = 'itinerary';
-        let expandedDay = 1;
+        let expandedDay = null; // 初始改為 null，由系統偵測「今天」
         let childHeight = 100;
         let randomPhrase = DAILY_PHRASES[0];
         let expandedSOS = null;
         let editingExpenseId = null; 
-        let pendingDeleteId = null; // 記錄準備要刪除的記帳 ID
+        let pendingDeleteId = null; 
 
         document.addEventListener('DOMContentLoaded', () => { 
+            
+            // --- 時間魔法：自動偵測日期 ---
+            const today = new Date();
+            today.setHours(0,0,0,0);
+            let foundToday = false;
+
+            ITINERARY_DATA.forEach(day => {
+                const tripDate = new Date(day.fullDate);
+                tripDate.setHours(0,0,0,0);
+
+                // 1. 如果日期已經過去，自動將其隱藏 (僅執行一次，以免覆蓋用戶手動設定)
+                if (tripDate < today && !appState.autoHiddenProcessed) {
+                    appState.hiddenDays[day.day] = true;
+                }
+
+                // 2. 偵測「今天」，自動為您展開今天的行程！
+                if (tripDate.getTime() === today.getTime()) {
+                    expandedDay = day.day;
+                    foundToday = true;
+                }
+            });
+
+            if (!appState.autoHiddenProcessed) {
+                appState.autoHiddenProcessed = true;
+                saveState();
+            }
+
+            // 預防萬一：如果行程還沒開始，或全部結束，預設展開第一天
+            if (!foundToday && expandedDay === null) {
+                expandedDay = 1;
+            }
+
             cyclePhrase(); 
             render(); 
             cloudSync(false); 
         });
 
-        // --- 全域提示框 (取代 Alert) ---
         function showAlert(title, text, type = 'info') {
             document.getElementById('alert-title').innerText = title;
             document.getElementById('alert-text').innerText = text;
@@ -340,10 +398,7 @@
             document.getElementById('alert-overlay').style.display = 'flex';
         }
 
-        function closeAlert() {
-            document.getElementById('alert-overlay').style.display = 'none';
-        }
-
+        function closeAlert() { document.getElementById('alert-overlay').style.display = 'none'; }
         function showLoading(show, text="處理中...") {
             const overlay = document.getElementById('loading-overlay');
             document.getElementById('loading-text').innerText = text;
@@ -416,6 +471,7 @@
 
                 mergedState.completedSpots = { ...cloudState.completedSpots, ...mergedState.completedSpots };
                 mergedState.hiddenDays = { ...cloudState.hiddenDays, ...mergedState.hiddenDays };
+                mergedState.autoHiddenProcessed = appState.autoHiddenProcessed;
 
                 if (cloudState.customSpots) {
                     Object.keys(cloudState.customSpots).forEach(day => {
@@ -461,9 +517,14 @@
 
         function switchTab(tab) { currentTab = tab; render(); }
         
-        // 替換備案名稱中的特殊符號以利 Google Maps 準確搜尋
+        // --- 智慧地圖轉址邏輯 (精準導航與關鍵字淨化) ---
         function getMapLink(keyword) { 
-            const cleanKeyword = keyword.replace(' (備案)', '').replace(' (解饞)', '').replace(' (USJ園外)', '').replace(' (新世界)', '').replace(' (難波)', '').replace(' (梅田)', '').replace(' (天王寺)', '').replace(' (吃草莓/海鮮)', '').replace(' (黑門備案)', '').replace(' (天保山)', '').replace(' (鯨鯊)', '');
+            // 專屬指定地點
+            if (keyword === '飯店 Check-in') return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(HOTEL_ADDRESS)}`;
+            if (keyword === '飯店周邊吃晚餐/休息') return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('餐廳 ' + HOTEL_ADDRESS)}`;
+            
+            // 正則表達式：移除特定的狀態刮號，但保留(新世界店)等店名資訊以利精確搜尋
+            const cleanKeyword = keyword.replace(/\s*\((備案|解饞|搭小火車\/遊船|吃草莓\/海鮮|舒芙蕾鬆餅|室內躲雨)\)/g, '');
             return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanKeyword + ' 大阪')}`; 
         }
 
@@ -474,17 +535,22 @@
                 const isHidden = appState.hiddenDays[day.day];
                 const isExpanded = expandedDay === day.day && !isHidden;
                 
+                // 過去的天數若被收合，顯示「已結束」
+                const today = new Date();
+                today.setHours(0,0,0,0);
+                const isPastDay = new Date(day.fullDate) < today;
+                const dateLabel = isPastDay ? "已結束" : day.date;
+
                 if (isHidden) {
                     html += `
                         <div class="bg-gray-100 rounded-xl p-3 flex justify-between items-center opacity-70 border border-gray-200 shadow-sm">
-                            <span class="text-sm font-bold text-gray-500">Day ${day.day} - 已隱藏</span>
+                            <span class="text-sm font-bold text-gray-500">Day ${day.day} - ${dateLabel}</span>
                             <button onclick="toggleHideDay(${day.day})" class="text-xs text-blue-600 border border-blue-600 px-3 py-1.5 rounded-md bg-white font-bold shadow-sm">顯示行程</button>
                         </div>
                     `;
                     return;
                 }
 
-                // 特殊標記雨天的顏色
                 let intensityColor = day.intensity >= 8 ? "bg-red-100 text-red-800" : (day.intensity >= 5 ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800");
                 let intensityLabel = day.intensity >= 8 ? "高強度" : (day.intensity >= 5 ? "中等" : "輕鬆");
                 if (day.title.includes("雨天")) {
@@ -537,8 +603,11 @@
                     `;
                 });
 
+                // 整塊的透明度若為過去式則降低
+                const blockOpacity = isPastDay && !isExpanded ? 'opacity-60' : 'opacity-100';
+
                 html += `
-                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${isExpanded ? 'ring-2 ring-blue-500' : ''}">
+                    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${blockOpacity} ${isExpanded ? 'ring-2 ring-blue-500' : ''}">
                         <div class="p-4 flex items-center justify-between cursor-pointer bg-white" onclick="toggleDay(${day.day})">
                             <div class="flex items-center gap-3">
                                 <div class="flex flex-col items-center justify-center w-12 h-12 ${day.title.includes("雨天") ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'} rounded-xl font-bold shadow-inner">
@@ -546,7 +615,7 @@
                                     <span class="text-xl">${day.day}</span>
                                 </div>
                                 <div>
-                                    <div class="text-xs ${day.title.includes("雨天") ? 'text-blue-500 font-bold' : 'text-gray-500'} mb-0.5">${day.date}</div>
+                                    <div class="text-xs ${day.title.includes("雨天") ? 'text-blue-500 font-bold' : 'text-gray-500'} mb-0.5">${day.date} ${isPastDay ? '<span class="text-red-500 ml-1 font-bold">(已結束)</span>' : ''}</div>
                                     <h3 class="text-lg font-extrabold text-gray-800 leading-tight">${day.title}</h3>
                                 </div>
                             </div>
@@ -571,7 +640,7 @@
                                         <i data-lucide="moon" class="w-5 h-5 text-indigo-500"></i>
                                         <span class="text-sm text-indigo-900 font-bold">返回飯店休息</span>
                                     </div>
-                                    <a href="${getMapLink(HOTEL_ADDRESS)}" target="_blank" class="p-2 bg-indigo-600 rounded-lg text-white hover:bg-indigo-700 text-xs font-bold flex items-center gap-1 shadow">
+                                    <a href="${getMapLink('飯店 Check-in')}" target="_blank" class="p-2 bg-indigo-600 rounded-lg text-white hover:bg-indigo-700 text-xs font-bold flex items-center gap-1 shadow">
                                         🗺️ 導航回飯店
                                     </a>
                                 </div>
@@ -599,7 +668,6 @@
             container.innerHTML = html;
         }
 
-        // 彈出視窗
         function showSpotInfo(spotName) {
             const info = SPOT_DETAILS[spotName];
             if(!info) return;
@@ -682,8 +750,6 @@
             }
 
             const catOptions = EXPENSE_CATEGORIES.map(c => `<option value="${c.id}" ${c.id===formVals.catId?'selected':''}>${c.icon} ${c.label}</option>`).join('');
-            
-            // 產生包含 Day 0 的下拉選單
             const dayOptions = [0,1,2,3,4,5,6,7].map(d => `<option value="${d}" ${d===formVals.day?'selected':''}>Day ${d}${d===0?' (行前)':''}</option>`).join('');
 
             let conicStops = [];
@@ -722,23 +788,6 @@
                 </div>`;
             }).join('');
             if(!statsHtml) statsHtml = '<p class="text-xs text-gray-400 text-center">目前沒有分類資料</p>';
-
-            let rideHtml = '';
-            USJ_RIDES.forEach(ride => {
-                const ok = childHeight >= ride.h;
-                rideHtml += `
-                    <div class="p-3 rounded-xl border flex items-center justify-between ${ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} mb-2 shadow-sm">
-                        <div>
-                            <div class="font-bold text-gray-800 text-sm">${ride.name}</div>
-                            <div class="text-xs text-gray-500">${ride.area} | ${ride.type}</div>
-                            ${!ok && ride.switch ? '<span class="text-[10px] text-orange-600 font-bold block mt-1">💡 可用 Child Switch (輪流乘坐)</span>' : ''}
-                        </div>
-                        <div class="ml-2">
-                            ${ok ? '<i data-lucide="check-circle" class="text-green-600 w-6 h-6"></i>' : `<div class="text-center"><i data-lucide="x-circle" class="text-red-500 w-5 h-5 mx-auto"></i><span class="text-[10px] text-red-500 font-bold block mt-1">${ride.h}cm+</span></div>`}
-                        </div>
-                    </div>
-                `;
-            });
 
             container.innerHTML = `
                 <div class="space-y-6 fade-in pt-2">
@@ -802,25 +851,11 @@
                             <button onclick="downloadJSON()" class="bg-indigo-900/50 py-3 rounded-xl text-xs border border-indigo-400 hover:bg-indigo-800 shadow-sm flex items-center justify-center gap-1 font-bold"><i data-lucide="download" class="w-4 h-4"></i> 完整備份 (JSON)</button>
                         </div>
                     </div>
-
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <div class="flex items-center gap-2 mb-4">
-                            <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="baby" class="w-6 h-6"></i></div>
-                            <h3 class="text-lg font-bold text-gray-800">USJ 設施快篩</h3>
-                        </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">小朋友身高: <span class="text-blue-600 font-bold text-xl">${childHeight} cm</span></label>
-                            <input type="range" min="80" max="140" value="${childHeight}" oninput="updateHeight(this.value)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                            <div class="flex justify-between text-xs text-gray-400 mt-1 font-mono"><span>80cm</span><span>100cm</span><span>115cm</span><span>140cm</span></div>
-                        </div>
-                        <div class="grid grid-cols-1 gap-2">${rideHtml}</div>
-                    </div>
                 </div>
             `;
             if(editingExpenseId) previewCalc(); 
         }
 
-        // 記帳運算預覽 (支援台幣/日幣切換)
         function previewCalc() {
             const input = document.getElementById('ex-formula').value;
             const currency = document.getElementById('ex-currency').value;
@@ -904,7 +939,6 @@
             }
         }
 
-        // 觸發刪除確認彈窗
         function requestDeleteExpense(id) {
             pendingDeleteId = id;
             document.getElementById('confirm-overlay').style.display = 'flex';
@@ -950,7 +984,6 @@
             const dl = document.createElement('a'); dl.setAttribute("href", dataStr); dl.setAttribute("download", `大阪旅遊備份_${new Date().toISOString().slice(0,10)}.json`); dl.click();
         }
 
-        // --- 3. 日語學習 ---
         function cyclePhrase() {
             randomPhrase = DAILY_PHRASES[Math.floor(Math.random() * DAILY_PHRASES.length)];
             const content = document.getElementById('app-content');
@@ -999,7 +1032,6 @@
             `;
         }
 
-        // --- 4. 行前清單 ---
         function renderPacking(container) {
             const activePacking = appState.packing.filter(p => !p.deleted);
 
@@ -1036,7 +1068,6 @@
         function addPacking() { const input = document.getElementById('new-pack-item'); if(!input.value.trim()) return; const now = Date.now(); appState.packing.push({ id: now, text: input.value.trim(), checked: false, updatedAt: now, deleted: false }); render(); cloudSync(false); }
         function deletePacking(id) { const item = appState.packing.find(p => p.id === id); if (item) { item.deleted = true; item.updatedAt = Date.now(); } render(); cloudSync(false); }
 
-        // --- 5. SOS 緊急救援 ---
         const SOS_PHRASES = [
             {
                 id: 1, ch: "請幫幫我！", jp: "たすけてください！", romaji: "Tasukete kudasai!", en: "Help me!",
