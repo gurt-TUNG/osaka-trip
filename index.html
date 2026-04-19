@@ -105,7 +105,7 @@
         </div>
     </div>
 
-    <!-- 刪除確認彈窗 -->
+    <!-- 刪除確認彈窗 (防呆) -->
     <div id="confirm-overlay" onclick="cancelDelete()">
         <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl" onclick="event.stopPropagation()">
             <h3 class="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2"><i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i> 確認刪除</h3>
@@ -195,14 +195,11 @@
             "道頓堀水上觀光船": { desc: "持大阪周遊卡可免費搭乘。約 20 分鐘的航程，可以從水上欣賞道頓堀的熱鬧招牌，小孩會覺得很有趣。" },
             "固力果跑跑人看板": { desc: "大阪最具代表性的打卡地標，位於戎橋旁。晚上點燈後非常漂亮，適合全家合照留念。" },
             "心齋橋筋商店街": { desc: "長達 600 公尺的商店街，全程有遮雨棚。裡面有藥妝店、服飾店與 Disney Store，非常熱鬧。" },
-            
-            // --- Day 3 新增景點 ---
             "通天閣": { desc: "大阪的復古地標觀景塔，塔下有超大型溜滑梯 (TOWER SLIDER)，周邊充滿濃濃的昭和風情。" },
             "新世界老街": { desc: "誇張華麗的招牌街道，是吃串炸的聖地，隨便找間順眼的店進去品嚐大阪美味。" },
             "MEGA唐吉訶德 (新世界店)": { desc: "超大型旗艦店！走道寬敞適合推嬰兒車，商品齊全，從零食、伴手禮到藥妝一應俱全，是掃貨的最佳地點。" },
             "Bic Camera (天王寺店)": { desc: "位於阿倍野 Q's Mall 內，買電器、玩具、遊戲機超方便，且商場對親子極度友善，有兒童專屬區。" },
             "天王寺商圈 (藥妝/百貨)": { desc: "周邊有 Q's Mall、MIO 等百貨，藥妝店與服飾店密集，人潮比難波少，逛起來更舒服、好買。" },
-
             "超級任天堂世界": { desc: "USJ最受歡迎園區！建議買「能量手環」敲金幣。（注意：瑪利歐賽車需滿107cm）" },
             "Nintendo OSAKA": { desc: "大丸梅田13樓的任天堂官方店！販售獨家周邊，旁邊是寶可夢中心，小朋友的天堂。" },
             "海遊館 (鯨鯊)": { desc: "世界最大級水族館之一。「螺旋狀緩坡」設計不需爬樓梯，對家庭極度友善。" },
@@ -346,6 +343,7 @@
         let expandedSOS = null;
         let editingExpenseId = null; 
         let pendingDeleteId = null; 
+        let expenseSortMode = 'day'; // 記帳排序狀態 (預設為依天數)
 
         document.addEventListener('DOMContentLoaded', () => { 
             
@@ -707,6 +705,16 @@
             
             const activeExpenses = appState.expenses.filter(e => !e.deleted);
 
+            // 根據選擇的模式進行排序
+            if (expenseSortMode === 'day') {
+                activeExpenses.sort((a, b) => {
+                    if (a.day !== b.day) return b.day - a.day; // 天數大的在上，Day 0 在最下
+                    return b.id - a.id; // 同一天內，最新輸入的在上
+                });
+            } else {
+                activeExpenses.sort((a, b) => b.id - a.id); // 純粹依照輸入時間，最新在上
+            }
+
             activeExpenses.forEach(e => {
                 totalTWD += e.twd;
                 if(stats[e.catId] !== undefined) stats[e.catId] += e.twd;
@@ -789,6 +797,23 @@
             }).join('');
             if(!statsHtml) statsHtml = '<p class="text-xs text-gray-400 text-center">目前沒有分類資料</p>';
 
+            let rideHtml = '';
+            USJ_RIDES.forEach(ride => {
+                const ok = childHeight >= ride.h;
+                rideHtml += `
+                    <div class="p-3 rounded-xl border flex items-center justify-between ${ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} mb-2 shadow-sm">
+                        <div>
+                            <div class="font-bold text-gray-800 text-sm">${ride.name}</div>
+                            <div class="text-xs text-gray-500">${ride.area} | ${ride.type}</div>
+                            ${!ok && ride.switch ? '<span class="text-[10px] text-orange-600 font-bold block mt-1">💡 可用 Child Switch (輪流乘坐)</span>' : ''}
+                        </div>
+                        <div class="ml-2">
+                            ${ok ? '<i data-lucide="check-circle" class="text-green-600 w-6 h-6"></i>' : `<div class="text-center"><i data-lucide="x-circle" class="text-red-500 w-5 h-5 mx-auto"></i><span class="text-[10px] text-red-500 font-bold block mt-1">${ride.h}cm+</span></div>`}
+                        </div>
+                    </div>
+                `;
+            });
+
             container.innerHTML = `
                 <div class="space-y-6 fade-in pt-2">
                     
@@ -831,11 +856,20 @@
                         </div>
 
                         <div class="flex p-1 bg-gray-100 rounded-xl mb-3 shadow-inner">
-                            <button onclick="document.getElementById('ex-list-view').classList.remove('hidden'); document.getElementById('ex-stat-view').classList.add('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-gray-800">所有明細</button>
-                            <button onclick="document.getElementById('ex-list-view').classList.add('hidden'); document.getElementById('ex-stat-view').classList.remove('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700">分類統計圖</button>
+                            <button onclick="document.getElementById('ex-list-container').classList.remove('hidden'); document.getElementById('ex-stat-view').classList.add('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-gray-800">所有明細</button>
+                            <button onclick="document.getElementById('ex-list-container').classList.add('hidden'); document.getElementById('ex-stat-view').classList.remove('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700">分類統計圖</button>
                         </div>
 
-                        <div id="ex-list-view" class="max-h-72 overflow-y-auto border border-gray-100 rounded-xl">${expenseList}</div>
+                        <div id="ex-list-container">
+                            <div class="flex justify-between items-center mb-2 px-1">
+                                <span class="text-xs text-gray-500 font-bold tracking-wider">共 ${activeExpenses.length} 筆</span>
+                                <button onclick="toggleExpenseSort()" class="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-200 transition-colors shadow-sm font-bold">
+                                    <i data-lucide="arrow-up-down" class="w-3 h-3 text-blue-600"></i> 
+                                    ${expenseSortMode === 'day' ? '依行程天數' : '依輸入時間'}
+                                </button>
+                            </div>
+                            <div id="ex-list-view" class="max-h-72 overflow-y-auto border border-gray-100 rounded-xl bg-white shadow-sm">${expenseList}</div>
+                        </div>
                         <div id="ex-stat-view" class="hidden p-5 bg-white rounded-xl border border-gray-100 shadow-sm">
                             ${chartHtml}
                             ${statsHtml}
@@ -851,9 +885,28 @@
                             <button onclick="downloadJSON()" class="bg-indigo-900/50 py-3 rounded-xl text-xs border border-indigo-400 hover:bg-indigo-800 shadow-sm flex items-center justify-center gap-1 font-bold"><i data-lucide="download" class="w-4 h-4"></i> 完整備份 (JSON)</button>
                         </div>
                     </div>
+
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <div class="flex items-center gap-2 mb-4">
+                            <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="baby" class="w-6 h-6"></i></div>
+                            <h3 class="text-lg font-bold text-gray-800">USJ 設施快篩</h3>
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">小朋友身高: <span class="text-blue-600 font-bold text-xl">${childHeight} cm</span></label>
+                            <input type="range" min="80" max="140" value="${childHeight}" oninput="updateHeight(this.value)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            <div class="flex justify-between text-xs text-gray-400 mt-1 font-mono"><span>80cm</span><span>100cm</span><span>115cm</span><span>140cm</span></div>
+                        </div>
+                        <div class="grid grid-cols-1 gap-2">${rideHtml}</div>
+                    </div>
                 </div>
             `;
             if(editingExpenseId) previewCalc(); 
+        }
+
+        // 新增：切換排序模式功能
+        function toggleExpenseSort() {
+            expenseSortMode = expenseSortMode === 'day' ? 'time' : 'day';
+            render();
         }
 
         function previewCalc() {
@@ -1090,7 +1143,7 @@
                     { ch: "大約這麼高。", jp: "身長はこのくらいです。", romaji: "Shinchou wa kono kurai desu.", en: "About this tall. (Show hands)" },
                     { ch: "他是男生 / 女生。", jp: "男の子 / 女の子 です。", romaji: "Otokonoko / Onnanoko desu.", en: "He is a boy / She is a girl." },
                     { ch: "他穿著黑色的衣服。", jp: "黒い服を着ています。", romaji: "Kuroi fuku o kiteimasu.", en: "Wearing black clothes." },
-                    { ch: "他穿著白色的衣服。", jp: "白い服を着ています。", romaji: "Shiroi fuku o kiteimasu.", en: "Wearing white clothes." }
+                    { ch: "他穿著白色的衣服。", jp: "Shiroi fuku o kiteimasu.", en: "Wearing white clothes." }
                 ]
             },
             {
