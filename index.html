@@ -344,6 +344,7 @@
         let editingExpenseId = null; 
         let pendingDeleteId = null; 
         let expenseSortMode = 'day'; // 記帳排序狀態 (預設為依天數)
+        let currentAutoDay = 1; // 新增：預設記帳天數追蹤
 
         document.addEventListener('DOMContentLoaded', () => { 
             
@@ -351,6 +352,13 @@
             const today = new Date();
             today.setHours(0,0,0,0);
             let foundToday = false;
+
+            // 判斷是否為出發前，若是，記帳預設為 Day 0
+            const firstDayDate = new Date(ITINERARY_DATA[0].fullDate);
+            firstDayDate.setHours(0,0,0,0);
+            if (today < firstDayDate) {
+                currentAutoDay = 0;
+            }
 
             ITINERARY_DATA.forEach(day => {
                 const tripDate = new Date(day.fullDate);
@@ -361,9 +369,10 @@
                     appState.hiddenDays[day.day] = true;
                 }
 
-                // 2. 偵測「今天」，自動為您展開今天的行程！
+                // 2. 偵測「今天」，自動為您展開今天的行程與記帳預設日！
                 if (tripDate.getTime() === today.getTime()) {
                     expandedDay = day.day;
+                    currentAutoDay = day.day; // 同步更新記帳天數
                     foundToday = true;
                 }
             });
@@ -747,7 +756,8 @@
                 `;
             }).join('');
 
-            let formVals = { day: 1, catId: 'food', currency: 'JPY', desc: '', formula: '' };
+            // 使用 currentAutoDay 作為預設的記帳天數
+            let formVals = { day: currentAutoDay, catId: 'food', currency: 'JPY', desc: '', formula: '' };
             let btnText = "新增", btnColor = "bg-blue-600 hover:bg-blue-700";
             if (editingExpenseId) {
                 const exp = appState.expenses.find(e => e.id === editingExpenseId);
