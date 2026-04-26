@@ -138,7 +138,6 @@
         const EXCHANGE_RATE = 0.21;
         const API_URL = "https://script.google.com/macros/s/AKfycbwDmOWroNSekoK1ekr0mQDgCxlXY7LbQbWue_67hGmJNgq-2ZQ6N60oFUjTWn5wGaOD2w/exec";
         
-        // --- 旅遊行程資料庫 (加入 fullDate 以利程式偵測時間) ---
         const ITINERARY_DATA = [
             {
                 day: 1, fullDate: "2026/04/18", date: "4/18 (六)", title: "神戶動物王國 ➡️ 抵達大阪", intensity: 4, location: "Kobe Animal Kingdom", displayLoc: "神戶 -> 飯店",
@@ -153,7 +152,6 @@
                 baseSpots: ["Komeda珈琲店 (備案)", "大阪城 (搭小火車/遊船)", "難波八阪神社 (獅子頭)", "道頓堀水上觀光船", "固力果跑跑人看板", "心齋橋筋商店街", "🥩 千房大阪燒 (備案)", "🍜 神座拉麵 (備案)", "🐙 本家大章魚燒 (解饞)"]
             },
             {
-                // 🔥 Day 3 完美大翻新：通天閣、新世界、天王寺瘋狂血拼！
                 day: 3, fullDate: "2026/04/20", date: "4/20 (一)", title: "通天閣/新世界 ➡️ 天王寺購物", intensity: 5, location: "Tsutenkaku", displayLoc: "新世界 / 天王寺",
                 desc: "今天走輕鬆吃喝採買路線！上午前往新世界老街看通天閣、吃串炸。下午轉戰天王寺商圈，在 MEGA唐吉訶德、Bic Camera 及各大藥妝店買齊伴手禮與電器！",
                 meals: { b: "🍰 老爺爺起司蛋糕", l: "🍢 達摩/八重勝串炸", d: "天王寺百貨美食街" },
@@ -178,14 +176,13 @@
                 baseSpots: ["星乃珈琲店", "海遊館 (鯨鯊)", "北極星蛋包飯 (天保山)", "天保山摩天輪", "🍜 金龍拉麵 (備案)"]
             },
             {
-                day: 7, fullDate: "2026/04/24", date: "4/24 (五)", title: "黑門市場 ➡️ 臨空城 (🌧️雨天)", intensity: 5, location: "Rinku Premium Outlets", displayLoc: "市區 / 關西機場",
-                desc: "🌧️【雨天提醒】早上前往有頂棚遮蔽的黑門市場大啖草莓與海鮮！下午前往臨空城 Outlet (半室內需撐傘) 最後採購。預計 18:30 抵達機場。",
-                meals: { b: "🍓 黑門市場 (草莓/和牛串)", l: "🛍️ Outlet 美食街", d: "關西機場餐廳" },
-                baseSpots: ["黑門市場 (吃草莓/海鮮)", "🥩 國產牛燒肉 (黑門備案)", "臨空城 Outlet", "關西機場"]
+                day: 7, fullDate: "2026/04/24", date: "4/24 (五)", title: "天王寺 ➡️ 臨空城 (🌧️雨天)", intensity: 5, location: "Rinku Premium Outlets", displayLoc: "天王寺 / 關西機場",
+                desc: "🌧️【雨天提醒】早上前往天王寺站買老爺爺起司蛋糕，並去唐吉訶德進行最後採購！下午前往臨空城 Outlet (半室內需撐傘) 最後掃貨。預計 18:30 抵達機場。",
+                meals: { b: "🍰 老爺爺起司蛋糕", l: "🛍️ Outlet 美食街", d: "關西機場餐廳" },
+                baseSpots: ["天王寺站 (買蛋糕)", "唐吉訶德 (天王寺周邊)", "臨空城 Outlet", "關西機場"]
             }
         ];
 
-        // --- 景點介紹資料庫 ---
         const SPOT_DETAILS = {
             "飯店 Check-in": { desc: "辦理入住手續，放下沉重的行李，讓全家人稍微休息一下恢復體力。" },
             "飯店周邊吃晚餐/休息": { desc: "第一天舟車勞頓，建議在飯店附近找間順眼的餐廳或居酒屋吃晚餐，早點休息充電。" },
@@ -204,6 +201,9 @@
             "Nintendo OSAKA": { desc: "大丸梅田13樓的任天堂官方店！販售獨家周邊，旁邊是寶可夢中心，小朋友的天堂。" },
             "海遊館 (鯨鯊)": { desc: "世界最大級水族館之一。「螺旋狀緩坡」設計不需爬樓梯，對家庭極度友善。" },
             "關西機場": { desc: "20:55 航班，建議 18:30 前抵達辦理報到與托運。" },
+            "天王寺站 (買蛋糕)": { desc: "天王寺車站內 (如MIO本館周邊) 也有老爺爺起司蛋糕分店，不用去難波人擠人，剛出爐當早餐吃超棒！" },
+            "唐吉訶德 (天王寺周邊)": { desc: "天王寺附近的驚安殿堂（例如阿倍野店），適合補齊最後還沒買到的藥妝與伴手禮。" },
+            "臨空城 Outlet": { desc: "關西機場旁的超大型 Outlet，半室內設計，是上飛機前最後大採購的最佳去處。" },
             
             // --- 餐飲介紹 ---
             "Komeda珈琲店 (備案)": { desc: "知名咖啡店，早上點一杯飲料就免費送烤吐司與水煮蛋，絕佳的日本道地早餐體驗！" },
@@ -214,7 +214,6 @@
             "Shake Shack (梅田)": { desc: "知名紐約漢堡店，位於梅田阪神百貨內。牛肉漢堡排多汁，起司波浪薯條更是小朋友的最愛。" },
             "星乃珈琲店": { desc: "復古日式喫茶店，招牌是超厚實的『窯烤舒芙蕾鬆餅』，環境舒適，非常適合雨天悠閒吃早餐。" },
             "北極星蛋包飯 (天保山)": { desc: "日本蛋包飯創始店！位於天保山室內美食街（浪花美食橫丁）內，完美躲雨的午餐首選。" },
-            "黑門市場 (吃草莓/海鮮)": { desc: "大阪人的廚房！整條街都有遮雨棚，下雨也不怕。可以買又大又甜的草莓當早餐，大人吃現烤和牛。" },
             "🥩 千房大阪燒 (備案)": { desc: "大阪燒名店！師傅會在鐵板上展現美乃滋拉花絕技，口感蓬鬆，是用餐兼看秀的好選擇。" },
             "🐙 本家大章魚燒 (解饞)": { desc: "道頓堀排隊名店，主打超大塊的章魚腳，醬汁濃郁，買一盒全家在河畔分食剛剛好。" },
             "🍔 Hard Rock Cafe (USJ園外)": { desc: "在 USJ 園外 CityWalk 上。美式巨無霸漢堡與歡樂的音樂氣氛，非常適合樂園玩完後大口吃肉。" },
@@ -226,17 +225,18 @@
             "🥩 達摩串炸 (新世界)": { desc: "大阪最經典的串炸老店，生氣老闆招牌是打卡必備。麵衣薄脆，推薦炸起司、炸鵪鶉蛋。" },
             "🥩 八重勝 串炸 (備案)": { desc: "新世界必吃串炸之一！麵衣帶有山藥的微甜，牛筋串與炸蝦是必點招牌，小朋友也會喜歡。" },
             "🥩 敘敘苑燒肉 (備案)": { desc: "想犒賞自己一頓好的？日本頂級高級燒肉連鎖店，服務極佳，中午的商業午餐套餐非常划算！" },
-            "🥩 國產牛燒肉 (黑門備案)": { desc: "高品質的日本國產牛吃到飽！適合在黑門市場逛完後，想大口吃肉補充體力的完美備案。" },
             "🥟 551蓬萊肉包 (解饞)": { desc: "關西限定的靈魂美食！熱騰騰的豬肉包子香氣四溢，非常適合當作逛街時的解饞小點心。" },
             "🍜 自由軒咖哩飯 (備案)": { desc: "百年老店，招牌是把生雞蛋拌入熱騰騰的咖哩飯中，口感滑順獨特，是大阪特有的名物。" }
         };
 
+        // 🔥 包含「代購」分類
         const EXPENSE_CATEGORIES = [
             { id: 'food', icon: '🍔', label: '飲食', color: '#f97316' },
             { id: 'shopping', icon: '🛍️', label: '購物', color: '#a855f7' },
             { id: 'transport', icon: '🚃', label: '交通', color: '#3b82f6' },
             { id: 'ticket', icon: '🎟️', label: '門票', color: '#ef4444' },
             { id: 'toy', icon: '🧸', label: '玩具', color: '#ec4899' }, 
+            { id: 'proxy', icon: '🎁', label: '代購', color: '#10b981' }, 
             { id: 'other', icon: '📦', label: '其他', color: '#9ca3af' }
         ];
 
@@ -268,7 +268,7 @@
                 phrase: {jp:"これはおおさかに行きますか？", ch:"這個去大阪嗎？", r:"Kore wa Osaka ni ikimasu ka?"}
             },
             {
-                id: 'emergency', cat: "緊急求助", color: "bg-gray-100 text-gray-700",
+                id: 'emergency', emergency: true, cat: "緊急求助", color: "bg-gray-100 text-gray-700",
                 words: [{jp:"たすけて", ch:"幫忙"}, {jp:"まいご", ch:"迷路"}, {jp:"いたい", ch:"痛"}, {jp:"びょういん", ch:"醫院"}],
                 phrase: {jp:"まいごになりました", ch:"我迷路了", r:"Maigo ni narimashita"}
             }
@@ -296,6 +296,7 @@
                 if (!e.currency) e.currency = 'JPY'; 
                 if (!e.updatedAt) e.updatedAt = e.id; 
                 if (e.deleted === undefined) e.deleted = false;
+                if (e.verified === undefined) e.verified = false; // 🔥 加入已清點屬性
             });
             return expensesList;
         }
@@ -320,7 +321,7 @@
                 { id: 6, text: "常用藥品 (退燒/腸胃)", checked: false, updatedAt: Date.now(), deleted: false }
             ],
             customSpots: {}, completedSpots: {}, hiddenDays: {},
-            autoHiddenProcessed: false // 紀錄是否已經執行過自動隱藏
+            autoHiddenProcessed: false 
         };
 
         let appState = JSON.parse(localStorage.getItem('osaka_app_state')) || DEFAULT_STATE;
@@ -336,24 +337,25 @@
 
         function saveState() { localStorage.setItem('osaka_app_state', JSON.stringify(appState)); }
 
+        // --- 全局狀態變數 ---
         let currentTab = 'itinerary';
-        let expandedDay = null; // 初始改為 null，由系統偵測「今天」
+        let expandedDay = null; 
         let childHeight = 100;
         let randomPhrase = DAILY_PHRASES[0];
         let expandedSOS = null;
         let editingExpenseId = null; 
         let pendingDeleteId = null; 
-        let expenseSortMode = 'day'; // 記帳排序狀態 (預設為依天數)
-        let currentAutoDay = 1; // 新增：預設記帳天數追蹤
+        let expenseSortMode = 'day'; 
+        let currentAutoDay = 1; 
+        let expenseTabView = 'list'; 
+        let expenseStatDayFilter = 'all'; 
+        let includeProxyInStats = true; // 🔥 新增：是否包含代購金額開關
 
         document.addEventListener('DOMContentLoaded', () => { 
-            
-            // --- 時間魔法：自動偵測日期 ---
             const today = new Date();
             today.setHours(0,0,0,0);
             let foundToday = false;
 
-            // 判斷是否為出發前，若是，記帳預設為 Day 0
             const firstDayDate = new Date(ITINERARY_DATA[0].fullDate);
             firstDayDate.setHours(0,0,0,0);
             if (today < firstDayDate) {
@@ -364,15 +366,13 @@
                 const tripDate = new Date(day.fullDate);
                 tripDate.setHours(0,0,0,0);
 
-                // 1. 如果日期已經過去，自動將其隱藏 (僅執行一次，以免覆蓋用戶手動設定)
                 if (tripDate < today && !appState.autoHiddenProcessed) {
                     appState.hiddenDays[day.day] = true;
                 }
 
-                // 2. 偵測「今天」，自動為您展開今天的行程與記帳預設日！
                 if (tripDate.getTime() === today.getTime()) {
                     expandedDay = day.day;
-                    currentAutoDay = day.day; // 同步更新記帳天數
+                    currentAutoDay = day.day; 
                     foundToday = true;
                 }
             });
@@ -382,7 +382,6 @@
                 saveState();
             }
 
-            // 預防萬一：如果行程還沒開始，或全部結束，預設展開第一天
             if (!foundToday && expandedDay === null) {
                 expandedDay = 1;
             }
@@ -524,14 +523,11 @@
 
         function switchTab(tab) { currentTab = tab; render(); }
         
-        // --- 智慧地圖轉址邏輯 (精準導航與關鍵字淨化) ---
         function getMapLink(keyword) { 
-            // 專屬指定地點
             if (keyword === '飯店 Check-in') return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(HOTEL_ADDRESS)}`;
             if (keyword === '飯店周邊吃晚餐/休息') return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent('餐廳 ' + HOTEL_ADDRESS)}`;
             
-            // 正則表達式：移除特定的狀態刮號，但保留(新世界店)等店名資訊以利精確搜尋
-            const cleanKeyword = keyword.replace(/\s*\((備案|解饞|搭小火車\/遊船|吃草莓\/海鮮|舒芙蕾鬆餅|室內躲雨)\)/g, '');
+            const cleanKeyword = keyword.replace(/\s*\((備案|解饞|搭小火車\/遊船|吃草莓\/海鮮|舒芙蕾鬆餅|室內躲雨|天王寺周邊|買蛋糕)\)/g, '');
             return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cleanKeyword + ' 大阪')}`; 
         }
 
@@ -542,7 +538,6 @@
                 const isHidden = appState.hiddenDays[day.day];
                 const isExpanded = expandedDay === day.day && !isHidden;
                 
-                // 過去的天數若被收合，顯示「已結束」
                 const today = new Date();
                 today.setHours(0,0,0,0);
                 const isPastDay = new Date(day.fullDate) < today;
@@ -610,8 +605,42 @@
                     `;
                 });
 
-                // 整塊的透明度若為過去式則降低
                 const blockOpacity = isPastDay && !isExpanded ? 'opacity-60' : 'opacity-100';
+
+                // --- 🔥 USJ 身高快篩移至 Day 4 內部 ---
+                let usjHeightCheckHtml = '';
+                if (day.day === 4 && isExpanded) {
+                    let rideHtml = '';
+                    USJ_RIDES.forEach(ride => {
+                        const ok = childHeight >= ride.h;
+                        rideHtml += `
+                            <div class="p-2.5 rounded-xl border flex items-center justify-between ${ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} shadow-sm">
+                                <div>
+                                    <div class="font-bold text-gray-800 text-sm">${ride.name}</div>
+                                    <div class="text-xs text-gray-500">${ride.area} | ${ride.type}</div>
+                                    ${!ok && ride.switch ? '<span class="text-[10px] text-orange-600 font-bold block mt-0.5">💡 可用 Child Switch (輪流乘坐)</span>' : ''}
+                                </div>
+                                <div class="ml-2 flex-shrink-0">
+                                    ${ok ? '<i data-lucide="check-circle" class="text-green-600 w-5 h-5"></i>' : `<div class="text-center"><i data-lucide="x-circle" class="text-red-500 w-4 h-4 mx-auto"></i><span class="text-[10px] text-red-500 font-bold block mt-0.5">${ride.h}cm+</span></div>`}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    usjHeightCheckHtml = `
+                        <div class="mt-4 bg-white p-4 rounded-xl border border-blue-100 shadow-sm">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="p-1.5 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="baby" class="w-5 h-5"></i></div>
+                                <h4 class="text-sm font-bold text-gray-800">USJ 設施身高快篩</h4>
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-xs font-medium text-gray-700 mb-1">小朋友身高: <span class="text-blue-600 font-bold text-lg">${childHeight} cm</span></label>
+                                <input type="range" min="80" max="140" value="${childHeight}" oninput="updateHeight(this.value)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                                <div class="flex justify-between text-[10px] text-gray-400 mt-1 font-mono"><span>80</span><span>100</span><span>115</span><span>140</span></div>
+                            </div>
+                            <div class="grid grid-cols-1 gap-2">${rideHtml}</div>
+                        </div>
+                    `;
+                }
 
                 html += `
                     <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 ${blockOpacity} ${isExpanded ? 'ring-2 ring-blue-500' : ''}">
@@ -666,6 +695,10 @@
                                     <div class="flex items-center gap-2"><span class="bg-orange-200 text-orange-800 px-2 py-0.5 rounded text-xs font-bold w-8 text-center">晚</span> <span class="font-medium">${day.meals.d}</span></div>
                                 </div>
                             </div>
+                            
+                            <!-- USJ 身高檢測會顯示在這裡 -->
+                            ${usjHeightCheckHtml}
+
                         </div>` : ''}
                     </div>
                 `;
@@ -708,29 +741,39 @@
             cloudSync(false);
         }
 
+        // --- 工具與記帳渲染 ---
         function renderTools(container) {
             let totalTWD = 0;
-            let stats = { food:0, shopping:0, transport:0, ticket:0, toy:0, other:0 };
+            let stats = { food:0, shopping:0, transport:0, ticket:0, toy:0, proxy:0, other:0 };
             
             const activeExpenses = appState.expenses.filter(e => !e.deleted);
 
-            // 根據選擇的模式進行排序
+            let listExpenses = [...activeExpenses];
             if (expenseSortMode === 'day') {
-                activeExpenses.sort((a, b) => {
-                    if (a.day !== b.day) return b.day - a.day; // 天數大的在上，Day 0 在最下
-                    return b.id - a.id; // 同一天內，最新輸入的在上
+                listExpenses.sort((a, b) => {
+                    if (a.day !== b.day) return b.day - a.day; 
+                    return b.id - a.id; 
                 });
             } else {
-                activeExpenses.sort((a, b) => b.id - a.id); // 純粹依照輸入時間，最新在上
+                listExpenses.sort((a, b) => b.id - a.id); 
             }
 
-            activeExpenses.forEach(e => {
+            // 🔥 統計圖專用的篩選邏輯 (支援代購排除)
+            let chartExpenses = activeExpenses;
+            if (expenseStatDayFilter !== 'all') {
+                chartExpenses = chartExpenses.filter(e => e.day === parseInt(expenseStatDayFilter));
+            }
+            if (!includeProxyInStats) {
+                chartExpenses = chartExpenses.filter(e => e.catId !== 'proxy');
+            }
+
+            chartExpenses.forEach(e => {
                 totalTWD += e.twd;
                 if(stats[e.catId] !== undefined) stats[e.catId] += e.twd;
             });
 
-            const expenseList = activeExpenses.length === 0 ? '<p class="text-center text-gray-400 text-xs py-6">尚未有記錄</p>' : activeExpenses.map(item => {
-                const catObj = EXPENSE_CATEGORIES.find(c => c.id === item.catId) || EXPENSE_CATEGORIES[5];
+            const expenseList = listExpenses.length === 0 ? '<p class="text-center text-gray-400 text-xs py-6">尚未有記錄</p>' : listExpenses.map(item => {
+                const catObj = EXPENSE_CATEGORIES.find(c => c.id === item.catId) || EXPENSE_CATEGORIES[6]; 
                 const isEditing = editingExpenseId === item.id;
                 const formulaDisplay = item.currency === 'TWD' ? `NT$ ${item.formula}` : `¥ ${item.formula || item.jpy}`;
                 const dayLabel = item.day === 0 ? '行前' : `Day ${item.day}`;
@@ -740,8 +783,11 @@
                     <div class="flex items-center gap-3">
                         <div class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-lg shadow-sm">${catObj.icon}</div>
                         <div class="flex flex-col">
-                            <span class="text-sm font-bold ${isEditing ? 'text-yellow-800' : 'text-gray-800'}">${item.desc}</span>
-                            <span class="text-[10px] text-gray-400 font-mono">${dayLabel} • ${formulaDisplay}</span>
+                            <span class="text-sm font-bold ${isEditing ? 'text-yellow-800' : 'text-gray-800'} flex items-center flex-wrap gap-1">
+                                ${item.desc}
+                                ${item.verified ? '<span class="px-1.5 py-0.5 bg-green-100 text-green-700 border border-green-200 rounded text-[9px] leading-none shadow-sm">已清點</span>' : ''}
+                            </span>
+                            <span class="text-[10px] text-gray-400 font-mono mt-0.5">${dayLabel} • ${formulaDisplay}</span>
                         </div>
                     </div>
                     <div class="flex items-center gap-2">
@@ -756,7 +802,6 @@
                 `;
             }).join('');
 
-            // 使用 currentAutoDay 作為預設的記帳天數
             let formVals = { day: currentAutoDay, catId: 'food', currency: 'JPY', desc: '', formula: '' };
             let btnText = "新增", btnColor = "bg-blue-600 hover:bg-blue-700";
             if (editingExpenseId) {
@@ -769,6 +814,9 @@
 
             const catOptions = EXPENSE_CATEGORIES.map(c => `<option value="${c.id}" ${c.id===formVals.catId?'selected':''}>${c.icon} ${c.label}</option>`).join('');
             const dayOptions = [0,1,2,3,4,5,6,7].map(d => `<option value="${d}" ${d===formVals.day?'selected':''}>Day ${d}${d===0?' (行前)':''}</option>`).join('');
+            
+            const filterDayOptions = `<option value="all" ${expenseStatDayFilter==='all'?'selected':''}>全部天數彙總</option>` +
+                [0,1,2,3,4,5,6,7].map(d => `<option value="${d}" ${expenseStatDayFilter===d?'selected':''}>單看 Day ${d}${d===0?' (行前)':''}</option>`).join('');
 
             let conicStops = [];
             let currentPct = 0;
@@ -787,7 +835,7 @@
                 <div class="flex justify-center mb-6 mt-4">
                     <div class="relative w-40 h-40 rounded-full shadow-md border-4 border-white" style="${pieStyle}">
                         <div class="absolute inset-3 bg-white rounded-full flex items-center justify-center flex-col shadow-inner">
-                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">總花費</span>
+                            <span class="text-[10px] text-gray-500 font-bold uppercase tracking-widest">支出總計</span>
                             <span class="text-sm font-black text-gray-800">NT$ ${totalTWD.toLocaleString()}</span>
                         </div>
                     </div>
@@ -797,7 +845,7 @@
             const maxStat = Math.max(...Object.values(stats), 1);
             let statsHtml = EXPENSE_CATEGORIES.map(c => {
                 const val = stats[c.id];
-                if(val === 0) return '';
+                if(val === 0 || (!includeProxyInStats && c.id === 'proxy')) return ''; // 隱藏數值為0或被排除的分類
                 const pct = (val / maxStat) * 100;
                 return `
                 <div class="mb-3">
@@ -805,24 +853,10 @@
                     <div class="w-full bg-gray-200 rounded-full h-2 shadow-inner"><div class="h-2 rounded-full shadow-sm" style="width: ${pct}%; background-color: ${c.color}"></div></div>
                 </div>`;
             }).join('');
-            if(!statsHtml) statsHtml = '<p class="text-xs text-gray-400 text-center">目前沒有分類資料</p>';
+            if(!statsHtml) statsHtml = '<p class="text-xs text-gray-400 text-center">該期間目前沒有分類資料</p>';
 
-            let rideHtml = '';
-            USJ_RIDES.forEach(ride => {
-                const ok = childHeight >= ride.h;
-                rideHtml += `
-                    <div class="p-3 rounded-xl border flex items-center justify-between ${ok ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'} mb-2 shadow-sm">
-                        <div>
-                            <div class="font-bold text-gray-800 text-sm">${ride.name}</div>
-                            <div class="text-xs text-gray-500">${ride.area} | ${ride.type}</div>
-                            ${!ok && ride.switch ? '<span class="text-[10px] text-orange-600 font-bold block mt-1">💡 可用 Child Switch (輪流乘坐)</span>' : ''}
-                        </div>
-                        <div class="ml-2">
-                            ${ok ? '<i data-lucide="check-circle" class="text-green-600 w-6 h-6"></i>' : `<div class="text-center"><i data-lucide="x-circle" class="text-red-500 w-5 h-5 mx-auto"></i><span class="text-[10px] text-red-500 font-bold block mt-1">${ride.h}cm+</span></div>`}
-                        </div>
-                    </div>
-                `;
-            });
+            const listTabClass = expenseTabView === 'list' ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700';
+            const statTabClass = expenseTabView === 'stat' ? 'bg-white shadow text-gray-800' : 'text-gray-500 hover:text-gray-700';
 
             container.innerHTML = `
                 <div class="space-y-6 fade-in pt-2">
@@ -851,7 +885,7 @@
                                 </select>
                             </div>
                             
-                            <input type="text" id="ex-desc" value="${formVals.desc}" placeholder="輸入細項 (如: 機票 或 章魚燒)" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm mb-2 shadow-inner">
+                            <input type="text" id="ex-desc" value="${formVals.desc}" placeholder="輸入細項 (可善用算式 拆分代購金額)" class="w-full p-2.5 border border-gray-300 rounded-lg text-sm mb-2 shadow-inner">
                             
                             <div class="flex gap-2">
                                 <div class="relative flex-1">
@@ -865,12 +899,14 @@
                             ${editingExpenseId ? '<button onclick="cancelEdit()" class="w-full mt-2 py-1.5 text-xs text-gray-500 hover:text-gray-700 font-medium">取消修改</button>' : `<div class="text-[10px] text-gray-400 mt-1.5 text-right">切換幣別將自動為您轉換，日幣匯率估: ${EXCHANGE_RATE}</div>`}
                         </div>
 
+                        <!-- 動態綁定 Tab 樣式 -->
                         <div class="flex p-1 bg-gray-100 rounded-xl mb-3 shadow-inner">
-                            <button onclick="document.getElementById('ex-list-container').classList.remove('hidden'); document.getElementById('ex-stat-view').classList.add('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg bg-white shadow text-gray-800">所有明細</button>
-                            <button onclick="document.getElementById('ex-list-container').classList.add('hidden'); document.getElementById('ex-stat-view').classList.remove('hidden');" class="flex-1 py-2 text-xs font-bold rounded-lg text-gray-500 hover:text-gray-700">分類統計圖</button>
+                            <button onclick="expenseTabView='list'; render();" class="flex-1 py-2 text-xs font-bold rounded-lg ${listTabClass}">所有明細</button>
+                            <button onclick="expenseTabView='stat'; render();" class="flex-1 py-2 text-xs font-bold rounded-lg ${statTabClass}">分類統計圖</button>
                         </div>
 
-                        <div id="ex-list-container">
+                        <!-- 列表 View -->
+                        <div id="ex-list-container" class="${expenseTabView === 'list' ? '' : 'hidden'}">
                             <div class="flex justify-between items-center mb-2 px-1">
                                 <span class="text-xs text-gray-500 font-bold tracking-wider">共 ${activeExpenses.length} 筆</span>
                                 <button onclick="toggleExpenseSort()" class="text-xs flex items-center gap-1 bg-gray-100 text-gray-700 px-2.5 py-1.5 rounded-lg hover:bg-gray-200 transition-colors shadow-sm font-bold">
@@ -880,40 +916,50 @@
                             </div>
                             <div id="ex-list-view" class="max-h-72 overflow-y-auto border border-gray-100 rounded-xl bg-white shadow-sm">${expenseList}</div>
                         </div>
-                        <div id="ex-stat-view" class="hidden p-5 bg-white rounded-xl border border-gray-100 shadow-sm">
+
+                        <!-- 圖表 View -->
+                        <div id="ex-stat-view" class="p-5 bg-white rounded-xl border border-gray-100 shadow-sm ${expenseTabView === 'stat' ? '' : 'hidden'}">
+                            <div class="flex gap-2 mb-3">
+                                <select onchange="expenseStatDayFilter=this.value==='all'?'all':parseInt(this.value); render();" class="flex-1 p-2.5 border border-gray-300 rounded-lg text-sm bg-blue-50 text-blue-800 font-bold shadow-sm outline-none">
+                                    ${filterDayOptions}
+                                </select>
+                                <label class="flex items-center justify-center gap-1.5 px-3 border border-gray-300 rounded-lg bg-gray-50 text-xs font-bold text-gray-700 cursor-pointer shadow-sm hover:bg-gray-100 transition-colors">
+                                    <input type="checkbox" class="w-4 h-4 accent-blue-600" ${includeProxyInStats ? 'checked' : ''} onchange="includeProxyInStats=this.checked; render();">
+                                    含代購
+                                </label>
+                            </div>
+                            
                             ${chartHtml}
                             ${statsHtml}
                         </div>
                     </div>
 
+                    <!-- 🔥 資料匯出與匯入中心 (支援 CSV 覆蓋與 Excel V標記) -->
                     <div class="bg-gradient-to-r from-indigo-500 to-purple-600 p-5 rounded-2xl shadow-md text-white">
-                        <h3 class="text-base font-bold mb-2 flex items-center gap-2"><i data-lucide="database" class="w-5 h-5"></i> 資料匯出</h3>
-                        <p class="text-xs text-indigo-100 mb-3 leading-relaxed">資料已在背景與雲端自動同步，若需離線檔案，請點擊下方：</p>
+                        <h3 class="text-base font-bold mb-2 flex items-center gap-2"><i data-lucide="database" class="w-5 h-5"></i> 備份與進階管理</h3>
+                        <p class="text-xs text-indigo-100 mb-4 leading-relaxed">匯出 CSV 至電腦使用 Excel 編輯對帳。若已清點，請在「已清點」欄位打上 "V" 再匯入覆蓋。</p>
                         
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="downloadCSV()" class="bg-indigo-900/50 py-3 rounded-xl text-xs border border-indigo-400 hover:bg-indigo-800 shadow-sm flex items-center justify-center gap-1 font-bold"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> 匯出 Excel</button>
-                            <button onclick="downloadJSON()" class="bg-indigo-900/50 py-3 rounded-xl text-xs border border-indigo-400 hover:bg-indigo-800 shadow-sm flex items-center justify-center gap-1 font-bold"><i data-lucide="download" class="w-4 h-4"></i> 完整備份 (JSON)</button>
+                        <div class="grid grid-cols-2 gap-2 mb-2">
+                            <button onclick="downloadCSV()" class="bg-indigo-900/50 py-3 rounded-xl text-xs border border-indigo-400 hover:bg-indigo-800 shadow-sm flex items-center justify-center gap-1 font-bold"><i data-lucide="file-spreadsheet" class="w-4 h-4"></i> 匯出 CSV</button>
+                            <button onclick="document.getElementById('csv-upload').click()" class="bg-purple-900/50 py-3 rounded-xl text-xs border border-purple-400 hover:bg-purple-800 shadow-sm flex items-center justify-center gap-1 font-bold"><i data-lucide="upload-cloud" class="w-4 h-4"></i> 匯入 CSV (覆蓋)</button>
+                            <input type="file" id="csv-upload" accept=".csv" class="hidden" onchange="handleCSVUpload(event)">
                         </div>
-                    </div>
-
-                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
-                        <div class="flex items-center gap-2 mb-4">
-                            <div class="p-2 bg-blue-100 rounded-lg text-blue-600"><i data-lucide="baby" class="w-6 h-6"></i></div>
-                            <h3 class="text-lg font-bold text-gray-800">USJ 設施快篩</h3>
+                        <div class="grid grid-cols-1 mt-3 border-t border-indigo-400/50 pt-3">
+                            <button onclick="downloadJSON()" class="bg-indigo-900/30 py-3 rounded-xl text-[10px] border border-indigo-400/50 hover:bg-indigo-800 shadow-sm flex items-center justify-center gap-1"><i data-lucide="download" class="w-3 h-3"></i> 系統完整備份 (JSON)</button>
+                            <p class="text-[10px] text-indigo-200 mt-2 text-center leading-relaxed">💡 【緊急還原說明】<br>若不小心將資料改壞，請將下載的 JSON 文字檔打開並「全選複製」，貼上至 Google Sheets 的 RawData 分頁 A2 儲存格覆蓋，即可還原。</p>
                         </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">小朋友身高: <span class="text-blue-600 font-bold text-xl">${childHeight} cm</span></label>
-                            <input type="range" min="80" max="140" value="${childHeight}" oninput="updateHeight(this.value)" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
-                            <div class="flex justify-between text-xs text-gray-400 mt-1 font-mono"><span>80cm</span><span>100cm</span><span>115cm</span><span>140cm</span></div>
-                        </div>
-                        <div class="grid grid-cols-1 gap-2">${rideHtml}</div>
                     </div>
                 </div>
             `;
             if(editingExpenseId) previewCalc(); 
         }
 
-        // 新增：切換排序模式功能
+        // 新增身高更新函數
+        function updateHeight(val) {
+            childHeight = parseInt(val);
+            render();
+        }
+
         function toggleExpenseSort() {
             expenseSortMode = expenseSortMode === 'day' ? 'time' : 'day';
             render();
@@ -983,13 +1029,14 @@
                             ...appState.expenses[index],
                             day, catId, currency, desc, formula: rawFormula, jpy, twd,
                             updatedAt: Date.now() 
+                            // 編輯時保持原有的 verified 狀態不變
                         };
                     }
                     editingExpenseId = null;
                 } else {
                     const now = Date.now();
                     appState.expenses.unshift({
-                        id: now, updatedAt: now, deleted: false,
+                        id: now, updatedAt: now, deleted: false, verified: false,
                         day, catId, currency, desc, formula: rawFormula, jpy, twd,
                         time: new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'})
                     });
@@ -1026,20 +1073,133 @@
             document.getElementById('confirm-overlay').style.display = 'none';
         }
         
+        // --- 匯出 CSV (新增 已清點 欄位) ---
         function downloadCSV() {
             const activeExpenses = appState.expenses.filter(e => !e.deleted);
             if(activeExpenses.length === 0) {
                 showAlert("提示", "目前沒有資料可以匯出喔！", "info");
                 return;
             }
-            let csvContent = "data:text/csv;charset=utf-8,\uFEFF天數,分類,項目,日幣,台幣,時間\n";
+            // 匯出時加入 BOM，讓 Excel 打開不會亂碼，並新增「已清點」欄位
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF天數,分類,項目,日幣,台幣,時間,已清點\n";
             activeExpenses.forEach(e => { 
                 const catName = EXPENSE_CATEGORIES.find(c=>c.id===e.catId)?.label || '其他';
                 const dayStr = e.day === 0 ? '行前' : `Day ${e.day}`;
-                csvContent += `${dayStr},${catName},${e.desc},${e.jpy},${e.twd},${e.time}\n`; 
+                // 處理項目名稱中可能存在的逗號
+                const safeDesc = `"${e.desc.replace(/"/g, '""')}"`;
+                const verifiedStr = e.verified ? 'V' : '';
+                csvContent += `${dayStr},${catName},${safeDesc},${e.jpy},${e.twd},${e.time},${verifiedStr}\n`; 
             });
             const encodedUri = encodeURI(csvContent);
             const link = document.createElement("a"); link.setAttribute("href", encodedUri); link.setAttribute("download", "大阪旅遊記帳.csv"); link.click();
+        }
+
+        // --- 解析 CSV 格式 ---
+        function parseCSVRow(str) {
+            let arr = []; let quote = false; let cell = '';
+            for (let i = 0; i < str.length; i++) {
+                let c = str[i];
+                if (c === '"' && quote && str[i+1] === '"') { cell += '"'; i++; }
+                else if (c === '"') quote = !quote;
+                else if (c === ',' && !quote) { arr.push(cell); cell = ''; }
+                else cell += c;
+            }
+            arr.push(cell);
+            return arr.map(s => s.trim());
+        }
+
+        // --- 匯入 CSV 並覆蓋 ---
+        function handleCSVUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                if (confirm("⚠️ 警告：匯入 CSV 將會「完全覆蓋」目前手機上所有的記帳紀錄。\n\n確認您已經編輯好檔案了嗎？確定要繼續嗎？")) {
+                    processCSVImport(text);
+                }
+                event.target.value = ''; // 重置 input
+            };
+            // 使用 UTF-8 讀取，配合我們匯出時加的 BOM
+            reader.readAsText(file, 'UTF-8'); 
+        }
+
+        function processCSVImport(csvText) {
+            try {
+                const lines = csvText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                if (lines.length <= 1) {
+                    showAlert("匯入失敗", "檔案無效或沒有資料列。", "error");
+                    return;
+                }
+
+                const newExpenses = [];
+                const now = Date.now();
+
+                // 跳過表頭，從第二行開始
+                for (let i = 1; i < lines.length; i++) {
+                    let row = parseCSVRow(lines[i]);
+                    if(row.length < 5) continue; 
+                    
+                    let dayStr = row[0];
+                    let catStr = row[1];
+                    let desc = row[2] || '未命名';
+                    let jpy = parseInt(row[3]) || 0;
+                    let twd = parseInt(row[4]) || 0;
+                    let time = row[5] || new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'});
+                    // 讀取第7欄 (索引6) 的已清點狀態，只要有 V 就判定為 true
+                    let verifiedStr = row[6] || '';
+                    let verified = (verifiedStr.toUpperCase() === 'V');
+
+                    // 還原天數
+                    let day = 1;
+                    if (dayStr.includes('行前') || dayStr === '0') day = 0;
+                    else {
+                        const m = dayStr.match(/\d+/);
+                        if (m) day = parseInt(m[0]);
+                    }
+
+                    // 還原分類
+                    let catId = 'other';
+                    const catObj = EXPENSE_CATEGORIES.find(c => c.label === catStr);
+                    if (catObj) catId = catObj.id;
+
+                    newExpenses.push({
+                        id: now - i * 1000, // 確保 ID 唯一且維持順序
+                        updatedAt: now,
+                        deleted: false,
+                        verified: verified, // 🔥 寫入已清點狀態
+                        day: day,
+                        catId: catId,
+                        currency: 'JPY', 
+                        desc: desc,
+                        formula: String(jpy),
+                        jpy: jpy,
+                        twd: twd,
+                        time: time
+                    });
+                }
+
+                // 雲端同步技巧：將現有記帳標記為「已刪除」，讓雲端知道這些舊資料不要了
+                appState.expenses.forEach(e => {
+                    if (!e.deleted) {
+                        e.deleted = true;
+                        e.updatedAt = now;
+                    }
+                });
+
+                // 將新資料插到最前面
+                appState.expenses = [...newExpenses, ...appState.expenses];
+
+                saveState();
+                render();
+                cloudSync(false); // 背景同步上傳新資料
+                showAlert("匯入成功", `已成功載入 ${newExpenses.length} 筆資料並覆蓋舊紀錄！`, "success");
+
+            } catch (e) {
+                console.error(e);
+                showAlert("匯入失敗", "處理檔案時發生錯誤，請確保欄位格式未被破壞（不可刪除欄位）。", "error");
+            }
         }
 
         function downloadJSON() {
