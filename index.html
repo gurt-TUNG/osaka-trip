@@ -138,7 +138,7 @@
     </div>
 
     <script>
-        const HOTEL_ADDRESS = "大阪市西成区北開一丁目1番27号";
+        const HOTEL_ADDRESS = "大阪市西成区北开一丁目1番27号";
         const EXCHANGE_RATE = 0.21;
         const API_URL = "https://script.google.com/macros/s/AKfycbwDmOWroNSekoK1ekr0mQDgCxlXY7LbQbWue_67hGmJNgq-2ZQ6N60oFUjTWn5wGaOD2w/exec";
         
@@ -355,6 +355,13 @@
         let includeProxyInStats = true; 
 
         document.addEventListener('DOMContentLoaded', () => { 
+            
+            // 🔥 系統自動瘦身：清除歷史已刪除的垃圾資料，防止超過 Google 儲存上限
+            if (appState.expenses.length > 250) {
+                appState.expenses = appState.expenses.filter(e => !e.deleted);
+                saveState();
+            }
+
             const today = new Date();
             today.setHours(0,0,0,0);
             let foundToday = false;
@@ -1084,13 +1091,13 @@
             }
             
             // 建立表頭
-            const data = [["天數", "分類", "項目", "日幣", "台幣", "時間", "已清點"]];
+            const data = [["天數", "分類", "項目", "日幣", "台幣", "時間", "已清點", "系統ID(請勿修改)"]];
             
             activeExpenses.forEach(e => { 
                 const catName = EXPENSE_CATEGORIES.find(c=>c.id===e.catId)?.label || '其他';
                 const dayStr = e.day === 0 ? '行前' : `Day ${e.day}`;
                 const verifiedStr = e.verified ? 'V' : '';
-                data.push([dayStr, catName, e.desc, e.jpy, e.twd, e.time, verifiedStr]); 
+                data.push([dayStr, catName, e.desc, e.jpy, e.twd, e.time, verifiedStr, e.id]); 
             });
             
             const ws = XLSX.utils.aoa_to_sheet(data);
@@ -1104,7 +1111,7 @@
             const file = event.target.files[0];
             if (!file) return;
 
-            if (confirm("⚠️ 警告：匯入 Excel 將會「完全覆蓋」目前手機上所有的記帳紀錄。\n\n確認您已經編輯好檔案了嗎？確定要繼續嗎？")) {
+            if (confirm("⚠️ 警告：匯入 Excel 將會覆蓋目前手機上的記帳紀錄。\n\n確認您已經編輯好檔案了嗎？確定要繼續嗎？")) {
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     try {
@@ -1134,6 +1141,7 @@
 
                 const newExpenses = [];
                 const now = Date.now();
+                const importedIds = new Set(); // 記錄 Excel 中存在的 ID
 
                 // 跳過表頭，從第二行開始
                 for (let i = 1; i < rows.length; i++) {
@@ -1149,6 +1157,7 @@
                     let time = String(row[5] || new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'}));
                     let verifiedStr = String(row[6] || '');
                     let verified = (verifiedStr.toUpperCase() === 'V');
+                    let existingId = row[7] ? parseInt(row[7]) : null;
 
                     // 如果只有填日幣沒填台幣，自動換算台幣
                     if (jpy > 0 && twd === 0) {
@@ -1172,41 +1181,57 @@
                     const catObj = EXPENSE_CATEGORIES.find(c => c.label === catStr);
                     if (catObj) catId = catObj.id;
 
-                    newExpenses.push({
-                        id: now - i * 1000, // 確保 ID 唯一且維持順序
-                        updatedAt: now,
-                        deleted: false,
-                        verified: verified,
-                        day: day,
-                        catId: catId,
-                        currency: 'JPY', 
-                        desc: desc,
-                        formula: String(jpy),
-                        jpy: jpy,
-                        twd: twd,
-                        time: time
-                    });
+                    // 決定 ID
+                    let idToUse = existingId ? existingId : (now - i * 1000);
+                    importedIds.add(idToUse);
+
+                    // 尋找現有紀錄
+                    let existingExp = appState.expenses.find(e => e.id === idToUse);
+                    if (existingExp) {
+                        existingExp.day = day;
+                        existingExp.catId = catId;
+                        existingExp.desc = desc;
+                        existingExp.jpy = jpy;
+                        existingExp.twd = twd;
+                        existingExp.formula = String(jpy);
+                        existingExp.time = time;
+                        existingExp.verified = verified;
+                        existingExp.updatedAt = now;
+                        existingExp.deleted = false;
+                    } else {
+                        appState.expenses.push({
+                            id: idToUse,
+                            updatedAt: now,
+                            deleted: false,
+                            verified: verified,
+                            day: day,
+                            catId: catId,
+                            currency: 'JPY', 
+                            desc: desc,
+                            formula: String(jpy),
+                            jpy: jpy,
+                            twd: twd,
+                            time: time
+                        });
+                    }
                 }
 
-                // 雲端同步技巧：將現有記帳標記為「已刪除」，讓雲端知道這些舊資料不要了
+                // 將原本在手機裡，但在 Excel 中被刪掉（或沒有 ID）的項目標記為已刪除
                 appState.expenses.forEach(e => {
-                    if (!e.deleted) {
+                    if (!importedIds.has(e.id) && !e.deleted) {
                         e.deleted = true;
                         e.updatedAt = now;
                     }
                 });
 
-                // 將新資料插到最前面
-                appState.expenses = [...newExpenses, ...appState.expenses];
-
                 saveState();
                 render();
                 cloudSync(false); // 背景同步上傳新資料
-                showAlert("匯入成功", `已成功載入 ${newExpenses.length} 筆 Excel 資料並覆蓋舊紀錄！`, "success");
+                showAlert("匯入成功", `已成功同步 Excel 資料！`, "success");
 
             } catch (e) {
                 console.error(e);
-                showAlert("匯入失敗", "處理檔案時發生錯誤，請確保欄位格式未被破壞（不可刪除欄位）。", "error");
+                showAlert("匯入失敗", "處理檔案時發生錯誤，請確保「系統ID」欄位未被破壞。", "error");
             }
         }
 
